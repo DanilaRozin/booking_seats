@@ -4,6 +4,8 @@ from typing import AsyncGenerator
 import uvicorn
 from fastapi import FastAPI
 
+from api.routers import main_router, tags
+
 from core.settings import settings
 
 
@@ -19,7 +21,9 @@ app = FastAPI(
     title=settings.title,
     version=settings.version,
     description=settings.description,
+    openapi_tags=tags.tag_list,
 )
+app.include_router(main_router)
 
 
 @app.get(
