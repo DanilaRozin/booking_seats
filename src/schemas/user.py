@@ -1,0 +1,59 @@
+from datetime import datetime
+
+from fastapi_users import schemas
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+from src.core.constants import RoleEnum
+
+
+class UserBase(BaseModel):
+    """Базовая схема."""
+
+    username: str
+    email: EmailStr
+    phone: str | None = None
+    tg_id: str | None = None
+
+
+class UserInfo(UserBase):
+    """Схема с полной информацией."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    role: RoleEnum
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime | None
+
+
+class UserCreate(UserBase, schemas.CreateUpdateDictModel):
+    """Схема для регистрации."""
+
+    password: str
+
+
+class UserShortInfo(UserBase):
+    """Схема с короткой информацией для бронирвоания."""
+
+    id: int
+
+
+class UserUpdate(schemas.CreateUpdateDictModel):
+    """Схема для обновления."""
+
+    # Продублировал, потому что необходимо
+    # было выставить везде = None, для patch запросов
+    username: str | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+    tg_id: str | None = None
+    password: str | None = None
+    is_active: str | None = None
+
+
+class UserLogin(BaseModel):
+    """Схема для логина."""
+
+    login: EmailStr
+    password: str
