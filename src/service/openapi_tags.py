@@ -1,7 +1,5 @@
 """Модуль предназначен для автоматического добавления описаний к тэгам спецификации API."""
 
-from typing import List
-
 
 class OpenAPITags:
     """Класс для автоматического сбора наименования тегов и их описаний.
@@ -10,7 +8,7 @@ class OpenAPITags:
     описаний тэгов, переданных через метод add_tag().
     """
 
-    tag_list: List[dict] = []
+    tag_list: list[dict] = []
 
     def add_tag(self, name: str, description: str | None = None) -> str:
         """Добавление тега в общий список.
