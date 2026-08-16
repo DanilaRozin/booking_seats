@@ -3,8 +3,7 @@ from datetime import datetime
 from fastapi_users import schemas
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
-from schemas.validators import validate_phone_number
-
+from .validators import validate_phone_number
 from src.core.constants import RoleEnum
 
 
@@ -56,6 +55,12 @@ class UserUpdate(schemas.CreateUpdateDictModel):
     is_active: bool | None = None
 
     _validate_phone = field_validator('phone')(validate_phone_number)
+
+
+class UserAdminUpdate(UserUpdate):
+    """Схема для обновления пользователя Администратором."""
+
+    role: RoleEnum | None
 
 
 class UserLogin(BaseModel):
