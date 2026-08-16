@@ -1,9 +1,15 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 import uvicorn
 from fastapi import FastAPI
 
+from api.v1.media import router as media_router
 from core.settings import settings
 
 
@@ -21,6 +27,7 @@ app = FastAPI(
     description=settings.description,
 )
 
+app.include_router(media_router, prefix="/api/v1")
 
 @app.get(
     path='/',
