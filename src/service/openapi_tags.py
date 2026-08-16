@@ -11,7 +11,7 @@ class OpenAPITags:
     tag_list: list[dict] = []
 
     def add_tag(self, name: str, description: str | None = None) -> str:
-        """Добавление тега в общий список.
+        """Добавление тега и его описания в общий список.
 
         Note:
             Метод необходимо использовать при добавлении тэгов роутеру или
