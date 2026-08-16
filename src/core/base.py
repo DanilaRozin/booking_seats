@@ -1,2 +1,4 @@
-from src.core.base_model import Base  # noqa
-from src.models import User  # noqa
+from src.core.base_model import Base
+from src.models import User
+
+__all__ = ['Base', 'User']

@@ -7,8 +7,6 @@ from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin, Invalid
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, JWTStrategy
 from fastapi_users.authentication.transport.bearer import BearerTransport
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-
-# Импорт асинхронной сессии из SQLALchemy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

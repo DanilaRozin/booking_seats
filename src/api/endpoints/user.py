@@ -3,15 +3,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.db import get_session
+from api import SessionDep
+
 from src.core.user import UserManager, current_manager, current_user, get_user_manager
 from src.crud.user import user_crud
 from src.models import User
 from src.schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
-
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 router = APIRouter()
 
