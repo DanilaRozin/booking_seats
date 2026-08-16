@@ -2,7 +2,8 @@ from typing import AsyncIterator
 
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from src.core.settings import settings
 
