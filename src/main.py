@@ -4,7 +4,6 @@ from typing import AsyncGenerator
 import uvicorn
 from fastapi import FastAPI
 
-from core.settings import settings
 from src.api.routers import main_router
 from src.core.settings import settings
 

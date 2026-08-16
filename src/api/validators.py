@@ -1,10 +1,8 @@
-from uuid import UUID
-
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud.cafe import cafe_crud
-from models.cafe import Cafe
+from src.crud.cafe import cafe_crud
+from src.models.cafe import Cafe
 
 
 async def check_name_duplicate(
@@ -24,7 +22,7 @@ async def check_name_duplicate(
 
 
 async def check_cafe_exists(
-    cafe_id: UUID,
+    cafe_id: int,
     session: AsyncSession,
 ) -> Cafe:
     """Проверка наличия кафе в базе."""

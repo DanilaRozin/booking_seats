@@ -3,10 +3,10 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud.base import CRUDBase
-from models.cafe import Cafe
-from models.user import User
-from schemas.cafe import CafeCreate
+from src.crud.base import CRUDBase
+from src.models.cafe import Cafe
+from src.models.user import User
+from src.schemas.cafe import CafeCreate
 
 
 class CRUDCafe(CRUDBase):

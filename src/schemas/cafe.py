@@ -33,13 +33,7 @@ class CafeCreate(BaseModel):
 class CafeShortInfo(BaseModel):
     """Краткая схема кафе."""
 
-    id: UUID = Field()
-    name: str = Field()
-    address: str = Field()
-    phone: str = Field()
-    description: str = Field()
-    photo_id: UUID = Field()
-    id: UUID = Field(default_factory=UUID)
+    id: int = Field(default_factory=int)
     name: str = Field(default_factory=str)
     address: str = Field(default_factory=str)
     phone: str = Field(default_factory=str)
@@ -55,11 +49,11 @@ class CafeInfo(CafeShortInfo):
     managers: List[object] = Field()
     is_active: bool = Field()
     created_at: datetime = Field()
-    updated_at: datetime = Field()
+    updated_at: datetime | None = Field(default=None)
     managers: List[object] = Field(default_factory=List[object])
     is_active: bool = Field(default_factory=bool)
     created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 

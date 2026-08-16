@@ -3,11 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.validators import check_name_duplicate
-from crud.cafe import cafe_crud
-from schemas.cafe import CafeCreate, CafeInfo, CafeShortInfo
-
-from core.db import get_session
+from src.api.validators import check_cafe_exists, check_name_duplicate
+from src.core.db import get_session
+from src.crud.cafe import cafe_crud
+from src.schemas.cafe import CafeCreate, CafeInfo, CafeShortInfo, CafeUpdate
 
 router = APIRouter()
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
@@ -37,7 +36,7 @@ async def create_new_cafe(
         'phone': new_cafe.phone,
         'description': new_cafe.description,
         'photo_id': new_cafe.photo_id,
-        'is_active': new_cafe.is_active,
+        'is_active': True,
         'created_at': new_cafe.created_at,
         'updated_at': new_cafe.updated_at,
         'managers': [],
@@ -58,43 +57,43 @@ async def get_all_cafe(
     return await cafe_crud.get_multi(session)
 
 
-# @router.patch(
-#     '/{cafe_id}',
-#     response_model=CafeInfo,
-#     response_model_exclude_none=True,
-#     # dependencies=
-# )
-# async def partial_update_cafe(
-#     cafe_id: UUID,
-#     obj_in: CafeUpdate,
-#     session: SessionDep,
-# ) -> object:
-#     """Редактировать кафе."""
-#     db_cafe = await check_cafe_exists(
-#         cafe_id,
-#         session,
-#     )
-#     if obj_in.name is not None:
-#         await check_name_duplicate(obj_in.name, session)
-#     db_cafe = await cafe_crud.update(
-#         db_cafe,
-#         obj_in,
-#         session,
-#     )
-#     await session.commit()
-#     await session.refresh(db_cafe)
-#     return {
-#         "id": db_cafe.id,
-#         "name": db_cafe.name,
-#         "address": db_cafe.address,
-#         "phone": db_cafe.phone,
-#         "description": db_cafe.description,
-#         "photo_id": db_cafe.photo_id,
-#         "is_active": db_cafe.is_active,
-#         "created_at": db_cafe.created_at,
-#         "updated_at": db_cafe.updated_at,
-#         "managers": [],
-#     }
+@router.patch(
+    '/{cafe_id}',
+    response_model=CafeInfo,
+    response_model_exclude_none=True,
+    # dependencies=
+)
+async def partial_update_cafe(
+    cafe_id: int,
+    obj_in: CafeUpdate,
+    session: SessionDep,
+) -> object:
+    """Редактировать кафе."""
+    db_cafe = await check_cafe_exists(
+        cafe_id,
+        session,
+    )
+    if obj_in.name is not None:
+        await check_name_duplicate(obj_in.name, session)
+    db_cafe = await cafe_crud.update(
+        db_cafe,
+        obj_in,
+        session,
+    )
+    await session.commit()
+    await session.refresh(db_cafe)
+    return {
+        'id': db_cafe.id,
+        'name': db_cafe.name,
+        'address': db_cafe.address,
+        'phone': db_cafe.phone,
+        'description': db_cafe.description,
+        'photo_id': db_cafe.photo_id,
+        'is_active': True,
+        'created_at': db_cafe.created_at,
+        'updated_at': db_cafe.updated_at,
+        'managers': [],
+    }
 
 
 # @router.delete(
@@ -103,7 +102,7 @@ async def get_all_cafe(
 #     # dependencies=
 # )
 # async def remove_cafe(
-#     cafe_id: UUID,
+#     cafe_id: int,
 #     session: AsyncSession,
 # ) -> None:
 #     """Удалить кафе."""
