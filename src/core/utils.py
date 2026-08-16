@@ -1,6 +1,5 @@
-from datetime import datetime, timezone
-
-
-def utcnow_naive() -> datetime:
-    """Возвращает текущее время."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+def is_email(value: str) -> bool:
+    """Проверяется является ли строка Эмайлом или нет."""
+    if '@' in value:
+        return True
+    return False
