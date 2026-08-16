@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.18.4",
     "asyncpg>=0.31.0",
     "fastapi>=0.136.1",
+    "fastapi-users[sqlalchemy]==13.0.0",
     "pydantic>=2.13.3",
     "pydantic-settings>=2.14.0",
     "sqlalchemy[asyncio]>=2.0.49",
@@ -19,3 +20,12 @@ dev = [
     "pre-commit>=4.6.0",
     "ruff>=0.15.12",
 ]
+[tool.ruff]
+extend-exclude = ["alembic/versions"]
+force-exclude = true
+
+[tool.ruff.lint]
+extend-ignore = ["COM812"]
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["declared_attr", "sqlalchemy.orm.declared_attr"]

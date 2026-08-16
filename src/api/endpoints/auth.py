@@ -1,0 +1,45 @@
+from dataclasses import dataclass
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.core.db import get_session
+from src.core.user import UserManager, auth_backend, get_user_manager
+from src.schemas.user import UserLogin
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+router = APIRouter(prefix='/auth', tags=['Аутентификация'])
+
+
+@dataclass
+class _Credentials:
+    username: str
+    password: str
+
+
+@router.post(
+    '/login',
+    summary='Получение токена авторизации',
+    description='Возращает токен для последующей авторизации пользователя',
+)
+async def login(
+    credentials: UserLogin,
+    user_manager: UserManager = Depends(get_user_manager),
+) -> Response:
+    """Аутентифицирует пользователя по email и паролю, возвращает JWT-токен."""
+    user = await user_manager.authenticate(
+        _Credentials(username=credentials.login, password=credentials.password),
+    )
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='LOGIN_BAD_CREDENTIALS',
+        )
+
+    strategy = auth_backend.get_strategy()
+    response = await auth_backend.login(strategy, user)
+    await user_manager.on_after_login(user)
+    return response

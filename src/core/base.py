@@ -1,3 +1,2 @@
-from core.base_model import Base  # noqa
-from models.cafe import Cafe  # noqa
-from models.user import User  # noqa
+from src.core.db import Base  # noqa
+from src.models import Cafe, cafe_manager_connect, User  # noqa
