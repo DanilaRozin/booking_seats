@@ -9,11 +9,11 @@ from src.core.db import get_session
 from src.core.user import UserManager, current_manager, current_user, get_user_manager
 from src.crud.user import user_crud
 from src.models import User
-from src.schemas.user import UserCreate, UserInfo, UserUpdate
+from src.schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
-router = APIRouter(prefix='/users', tags=['Пользователи'])
+router = APIRouter()
 
 
 # Регистрация пользователя
@@ -22,14 +22,20 @@ router = APIRouter(prefix='/users', tags=['Пользователи'])
     response_model=UserInfo,
     status_code=status.HTTP_201_CREATED,
     summary='Регистрация пользователя',
-    description='Создает в БД запись о пользователе и возращает её',
 )
 async def register(
     user_create: UserCreate,
     request: Request,
     user_manager: UserManager = Depends(get_user_manager),
 ) -> User:
-    """Регистрация нового пользователя (POST /users)."""
+    """Регистрация пользователя.
+
+    - **username**: юзернейм пользователя
+    - **email**: адрес электронной почты
+    - **phone**: номер телефона
+    - **tg_id**: Telegram ID (опционально)
+    - **password**: пароль
+    """
     try:
         user = await user_manager.create(user_create, safe=True, request=request)
     except exceptions.UserAlreadyExists:
@@ -51,7 +57,6 @@ async def register(
     response_model_exclude_none=True,
     dependencies=[Depends(current_manager)],
     summary='Посмотреть список всех пользователей',
-    description='Возращает список состоящий из всех пользователей',
 )
 async def get_list_user_info(
     session: SessionDep,
@@ -65,7 +70,6 @@ async def get_list_user_info(
     response_model=UserInfo,
     response_model_exclude_none=True,
     summary='Посмотреть информацию о себе',
-    description='Возращает информацию о пользователе',
 )
 async def get_me_info(
     session: SessionDep,
@@ -111,7 +115,7 @@ async def get_user_info_by_id(
     response_model_exclude_none=True,
 )
 async def update_user_info(
-    obj_in: UserUpdate,
+    obj_in: UserAdminUpdate,
     user_id: int,
     request: Request,
     user_manager: UserManager = Depends(get_user_manager),
