@@ -1,14 +1,22 @@
 {
     "version": "0.2.0",
     "configurations": [
-
+        {
+            "name": "Attach by Process ID",
+            "processId": "${command:PickProcess}",
+            "request": "attach",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
         {
             "name": "FastAPI server",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "main:app",
+                "src.main:app",
                 "--reload",
                 "--host",
                 "0.0.0.0",
@@ -16,7 +24,7 @@
                 "8000"
             ],
             "jinja": true,
-            "cwd": "${workspaceFolder}/src"
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
