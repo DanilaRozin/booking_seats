@@ -9,6 +9,8 @@ from alembic import context
 
 from core.settings import settings
 from core.alembic_models import Base
+from models.cafe import Cafe
+from models.user import User
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

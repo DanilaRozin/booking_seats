@@ -1,8 +1,10 @@
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager  # Ruff
 from typing import AsyncGenerator
 
 import uvicorn
 from fastapi import FastAPI
+
+from api.routers import main_router
 
 from core.settings import settings
 
@@ -20,6 +22,8 @@ app = FastAPI(
     version=settings.version,
     description=settings.description,
 )
+
+app.include_router(main_router)
 
 
 @app.get(
