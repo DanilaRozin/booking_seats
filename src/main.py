@@ -10,6 +10,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from api.v1.media import router as media_router
+
 from src.api.routers import main_router
 from src.core.settings import settings
 
@@ -29,6 +30,7 @@ app = FastAPI(
 )
 
 app.include_router(media_router, prefix="/api/v1")
+
 
 @app.get(
     path='/',

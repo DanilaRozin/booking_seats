@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import BOOLEAN, DateTime, Integer, func
-from sqlalchemy.orm import (Mapped, declarative_base, declared_attr,
-                            mapped_column)
+from sqlalchemy.orm import Mapped, declarative_base, declared_attr, mapped_column
 
 
 def get_utc_now() -> datetime:

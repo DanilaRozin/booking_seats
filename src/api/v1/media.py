@@ -14,9 +14,15 @@ router = APIRouter(prefix="/media", tags=["Media (Изображения)"])
     response_model=MediaResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Загрузить изображение",
-    description="Принимает файл (JPG/PNG до 5МБ), оптимизирует его через Pillow и сохраняет.",
+    description=(
+        "Принимает файл (JPG/PNG до 5МБ), "
+        "оптимизирует его через Pillow и сохраняет."
+    ),
 )
-async def upload_media(file: UploadFile = File(...)) -> MediaResponse:
+async def upload_media(
+    file: UploadFile = File(...),
+) -> MediaResponse:
+    """Загрузить и сохранить медиафайл."""
     result = await MediaService.save_image(file)
     return MediaResponse(**result)
 
@@ -28,5 +34,6 @@ async def upload_media(file: UploadFile = File(...)) -> MediaResponse:
     description="Возвращает файл изображения по его UUID.",
 )
 async def get_media(media_id: UUID) -> FileResponse:
+    """Получить медиафайл по UUID."""
     file_path = MediaService.get_image_path(media_id)
     return FileResponse(path=file_path, media_type="image/jpeg")

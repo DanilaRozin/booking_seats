@@ -20,4 +20,5 @@ class MediaResponse(BaseModel):
     )
 
     class Config:
+        """Конфигурация Pydantic схемы."""
         from_attributes = True

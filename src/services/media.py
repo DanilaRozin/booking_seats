@@ -1,9 +1,8 @@
-import os
 import uuid
 from pathlib import Path
 
-from fastapi import HTTPException, UploadFile, status
 from PIL import Image, UnidentifiedImageError
+from fastapi import HTTPException, UploadFile, status
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
