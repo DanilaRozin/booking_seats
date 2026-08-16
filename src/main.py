@@ -4,7 +4,8 @@ from typing import AsyncGenerator
 import uvicorn
 from fastapi import FastAPI
 
-from core.settings import settings
+from src.api.routers import main_router
+from src.core.settings import settings
 
 
 @asynccontextmanager
@@ -34,6 +35,8 @@ async def index() -> dict:
         'status': 'OK',
     }
 
+
+app.include_router(main_router)
 
 if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=8000)
