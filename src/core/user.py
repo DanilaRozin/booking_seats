@@ -9,20 +9,33 @@ from fastapi_users.authentication.transport.bearer import BearerTransport
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
 # Импорт асинхронной сессии из SQLALchemy
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.constants import PASSWORD_MIN_LEN, RoleEnum
-from src.core.db import get_session
-from src.core.settings import settings
-from src.models.user import User
+from .constants import PASSWORD_MIN_LEN, RoleEnum
+from .db import get_session
+from .settings import settings
+from .utils import is_email
+from src.models import User
 from src.schemas.user import UserCreate
+from src.schemas.validators import validate_phone_number
+
+
+class UserDatabase(SQLAlchemyUserDatabase):
+    """Расширем возможности класса SQLAlchemyUserDatabase чтобы добавить поиск по номеру телефона."""
+
+    async def get_by_phone(self, phone: str) -> User | None:
+        """Получаем юзера по номеру телефона."""
+        phone = validate_phone_number(phone)
+        statement = select(self.user_table).where(self.user_table.phone == phone)
+        return await self._get_user(statement)
 
 
 async def get_user_db(
     session: Annotated[AsyncSession, Depends(get_session)],
-) -> AsyncGenerator[SQLAlchemyUserDatabase, None]:
+) -> AsyncGenerator[UserDatabase, None]:
     """Отдаёт адаптер БД для fastapi-users, привязанный к текущей сессии."""
-    yield SQLAlchemyUserDatabase(session, User)
+    yield UserDatabase(session, User)
 
 
 # Меняем логику авторизации вдокументации,
@@ -61,6 +74,29 @@ auth_backend = AuthenticationBackend(
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     """Логика создания/аутентификации/обновления пользователей."""
 
+    async def authenticate(self, login: str, password: str) -> User | None:
+        """Аутентифицирует пользователя по email или телефону."""
+        user = (
+            await self.user_db.get_by_email(login)
+            if is_email(login)
+            else await self.user_db.get_by_phone(login)
+        )
+
+        if user is None:
+            self.password_helper.hash(password)
+            return None
+
+        verified, updated_password_hash = self.password_helper.verify_and_update(
+            password,
+            user.hashed_password,
+        )
+        if not verified:
+            return None
+        if updated_password_hash is not None:
+            await self.user_db.update(user, {'hashed_password': updated_password_hash})
+
+        return user
+
     async def validate_password(self, password: str, user: UserCreate | User) -> None:
         """Проверяет пароль на минимальную длину и совпадение с email."""
         if len(password) < PASSWORD_MIN_LEN:
@@ -76,7 +112,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
 
 async def get_user_manager(
-    user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
+    user_db: UserDatabase = Depends(get_user_db),
 ) -> AsyncGenerator[UserManager, None]:
     """Отдаёт UserManager, привязанный к текущей сессии."""
     yield UserManager(user_db)
