@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 __all__ = [
-    "__version__",
-    "__version_tuple__",
-    "version",
-    "version_tuple",
-    "__commit_id__",
-    "commit_id",
+    '__version__',
+    '__version_tuple__',
+    'version',
+    'version_tuple',
+    '__commit_id__',
+    'commit_id',
 ]
 
 version: str

@@ -63,7 +63,7 @@ def configure_logging(
         extra={
             'username': SYSTEM_USERNAME,
             'user_id': SYSTEM_USER_ID,
-        }
+        },
     )
 
 
