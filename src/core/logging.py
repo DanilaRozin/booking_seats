@@ -71,9 +71,7 @@ def contextualize_user(
     user_id: Optional[int | str] = None,
     username: Optional[str] = None,
 ) -> Any:
-    """Возвращает контекстный менеджер для временной подстановки user_id
-
-    и username.
+    """Возвращает контекстный менеджер для подстановки user_id и username.
 
     Если значения не переданы, используются системные значения по умолчанию.
     """
