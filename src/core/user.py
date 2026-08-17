@@ -10,13 +10,14 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from models import User
+from schemas.user import UserCreate
+from schemas.validators import validate_phone_number
+
 from .constants import PASSWORD_MIN_LEN, RoleEnum
 from .db import get_session
 from .settings import settings
 from .utils import is_email
-from src.models import User
-from src.schemas.user import UserCreate
-from src.schemas.validators import validate_phone_number
 
 
 class UserDatabase(SQLAlchemyUserDatabase):

@@ -2,11 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Query
 
-from api import SessionDep
+from api import SessionDep, UserDep
 from api.validators import check_table_exists
 from crud import cafe_crud, table_crud
 from models import Table
 from schemas.table import TableCreate, TableInfo, TableUpdate
+
+from core.constants import RoleEnum
 
 router = APIRouter()
 
@@ -21,6 +23,7 @@ router = APIRouter()
 )
 async def get_all_tables(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
+    user: UserDep,
     session: SessionDep,
     show_active: Annotated[
         bool | None,
@@ -35,6 +38,8 @@ async def get_all_tables(
     пользователей - только активные.
 
     """
+    if user.role == RoleEnum.USER:
+        show_active = True
     conditions = [Table.cafe_id == cafe_id]
     if show_active is not None:
         conditions.append(Table.is_active.is_(show_active))

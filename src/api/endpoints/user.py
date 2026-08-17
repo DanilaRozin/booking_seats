@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep
+from crud.user import user_crud
+from models import User
+from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
 
-from src.core.user import UserManager, current_manager, current_user, get_user_manager
-from src.crud.user import user_crud
-from src.models import User
-from src.schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
+from core.user import UserManager, current_manager, current_user, get_user_manager
 
 router = APIRouter()
 

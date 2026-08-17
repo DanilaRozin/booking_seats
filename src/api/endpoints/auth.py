@@ -4,9 +4,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.db import get_session
-from src.core.user import UserManager, auth_backend, get_user_manager
-from src.schemas.user import UserLogin
+from schemas.user import UserLogin
+
+from core.db import get_session
+from core.user import UserManager, auth_backend, get_user_manager
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 

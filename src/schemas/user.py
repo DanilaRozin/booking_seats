@@ -4,7 +4,7 @@ from fastapi_users import schemas
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 from .validators import validate_phone_number
-from src.core.constants import RoleEnum
+from core.constants import RoleEnum
 
 
 class UserBase(BaseModel):
