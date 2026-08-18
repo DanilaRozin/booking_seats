@@ -13,9 +13,9 @@ class Table(Base):
         ForeignKey('cafes.id'),
         primary_key=True,
     )
-    seat_count: Mapped[int] = mapped_column(
+    seat_number: Mapped[int] = mapped_column(
         SmallInteger,
-        CheckConstraint('seat_count >= 1'),
+        CheckConstraint('seat_number >= 1'),
     )
     description: Mapped[str | None] = mapped_column(
         String(TABLE_DESC_LENGTH),

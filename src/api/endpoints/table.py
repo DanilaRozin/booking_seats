@@ -13,8 +13,6 @@ from core.user import current_manager
 
 router = APIRouter()
 
-# TODO: Добавить валидацию.
-
 
 @router.get(
     '/',
