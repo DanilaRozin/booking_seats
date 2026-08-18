@@ -8,6 +8,8 @@ from core.constants import TABLE_DESC_LENGTH
 class Table(Base):
     """Модель столов в кафе."""
 
+    __tablename__ = 'tables'
+
     cafe_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey('cafes.id'),
