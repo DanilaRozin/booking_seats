@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -13,12 +12,6 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
 router = APIRouter()
-
-
-@dataclass
-class _Credentials:
-    username: str
-    password: str
 
 
 @router.post(
@@ -47,8 +40,8 @@ async def login(
         )
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Учетная запись заблокирована!',
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f'Учетная запись заблокирована! Ваш id {user.id}. Обратитесь к администрации',
         )
 
     strategy = auth_backend.get_strategy()
