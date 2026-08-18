@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep
+from api.validators import existing_user
 from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
@@ -34,6 +35,7 @@ async def register(
     - **tg_id**: Telegram ID (опционально)
     - **password**: пароль
     """
+    await existing_user(user_create, user_manager)
     try:
         user = await user_manager.create(user_create, safe=True, request=request)
     except exceptions.UserAlreadyExists:
