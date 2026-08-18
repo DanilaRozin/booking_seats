@@ -2,7 +2,8 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from api.routers import main_router, tags
 
@@ -23,7 +24,26 @@ app = FastAPI(
     description=settings.description,
     openapi_tags=tags.tag_list,
 )
-app.include_router(main_router)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+    request: Request,
+    exception: HTTPException,
+) -> JSONResponse:
+    """Обрабатывает HTTP-исключение и изменяет названия полей ответа.
+
+    Преобразует названия полей ответа в значения "status" и "message".
+
+    """
+    return JSONResponse(
+        status_code=exception.status_code,
+        content={
+            'status': exception.status_code,
+            'message': exception.detail,
+        },
+        headers=exception.headers,
+    )
 
 
 @app.get(
