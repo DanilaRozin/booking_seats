@@ -29,6 +29,11 @@ class UserDatabase(SQLAlchemyUserDatabase):
         statement = select(self.user_table).where(self.user_table.phone == phone)
         return await self._get_user(statement)
 
+    async def get_by_username(self, username: str) -> User | None:
+        """Получаем юзера по номеру телефона."""
+        statement = select(self.user_table).where(self.user_table.username == username)
+        return await self._get_user(statement)
+
 
 async def get_user_db(
     session: Annotated[AsyncSession, Depends(get_session)],
