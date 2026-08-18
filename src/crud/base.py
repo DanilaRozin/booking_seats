@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Generic, TypeVar
 
 from fastapi.encoders import jsonable_encoder
@@ -50,7 +51,7 @@ class CRUDBase(Generic[ModelT]):
         self,
         session: AsyncSession,
         *conditions: ColumnElement[bool],
-    ) -> list[ModelT]:
+    ) -> Sequence[ModelT]:
         """Получает все объекты модели.
 
         Args:
@@ -63,7 +64,7 @@ class CRUDBase(Generic[ModelT]):
 
         """
         db_objs = await session.execute(select(self.model).where(*conditions))
-        return list(db_objs.scalars().all())
+        return db_objs.scalars().all()
 
     async def create(
         self,

@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query
@@ -29,7 +30,7 @@ async def get_all_tables(
             description=('Показывать все столы в кафе, только активные или только не активные.'),
         ),
     ] = None,
-) -> list[Table]:
+) -> Sequence[Table]:
     """Получение списка доступных для бронирования столов в кафе.
 
     Для администраторов и менеджеров - все столы (с возможностью выбора), для
