@@ -36,9 +36,12 @@ async def get_all_tables(
 
     Для администраторов и менеджеров - все столы (с возможностью выбора), для
     пользователей - только активные.
+    По умолчанию показывает:
+    - для администратора - все столы в кафе
+    - для менеджера - активные столы в кафе
 
     """
-    if user.role == RoleEnum.USER:
+    if user.role == RoleEnum.MANAGER and show_active is None or user.role == RoleEnum.USER:
         show_active = True
     conditions = [Table.cafe_id == cafe_id]
     if show_active is not None:
