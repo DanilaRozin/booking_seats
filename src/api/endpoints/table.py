@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
 from api.validators import check_table_exists
@@ -9,10 +9,10 @@ from models import Table
 from schemas.table import TableCreate, TableInfo, TableUpdate
 
 from core.constants import RoleEnum
+from core.user import current_manager
 
 router = APIRouter()
 
-# TODO: Сделать разграничение прав доступа к ресурсам.
 # TODO: Добавить валидацию.
 
 
@@ -58,6 +58,7 @@ async def get_all_tables(
 async def get_table(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
     table_id: Annotated[int, Path(description='ID стола', gt=0)],
+    user: UserDep,
     session: SessionDep,
 ) -> Table | None:
     """Получение информации о столе в кафе по его ID.
@@ -66,13 +67,17 @@ async def get_table(
     активные.
 
     """
-    return await table_crud.get(table_id, session, Table.cafe_id == cafe_id)
+    conditions = [Table.cafe_id == cafe_id]
+    if user.role == RoleEnum.USER:
+        conditions.append(Table.is_active.is_(True))
+    return await table_crud.get(table_id, session, *conditions)
 
 
 @router.post(
     '/',
     response_model=TableInfo,
     summary='Новый стол в кафе',
+    dependencies=[Depends(current_manager)],
 )
 async def create_table(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
@@ -97,6 +102,7 @@ async def create_table(
     '/{table_id}',
     response_model=TableInfo,
     summary='Обновление информации о столе в кафе по его ID',
+    dependencies=[Depends(current_manager)],
 )
 async def update_table(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
