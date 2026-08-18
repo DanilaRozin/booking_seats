@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
-from api.validators import check_table_exists
+from api.validators import check_cafe_exists, check_table_exists
 from crud import cafe_crud, table_crud
 from models import Table
 from schemas.table import TableCreate, TableInfo, TableUpdate
@@ -41,6 +41,7 @@ async def get_all_tables(
     - для менеджера - активные столы в кафе
 
     """
+    await check_cafe_exists(cafe_id, session)
     if user.role == RoleEnum.MANAGER and show_active is None or user.role == RoleEnum.USER:
         show_active = True
     conditions = [Table.cafe_id == cafe_id]
@@ -92,6 +93,7 @@ async def create_table(
     Только для администраторов и менеджеров.
 
     """
+    await check_cafe_exists(cafe_id, session)
     table_number = cafe_crud.get_new_table_number(cafe_id, session)
 
     return await table_crud.create(
