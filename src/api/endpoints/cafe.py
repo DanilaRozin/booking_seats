@@ -1,12 +1,23 @@
-from typing import Annotated
+import traceback
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.services.cafe import add_managers_to_cafe_by_id, update_cafe_managers_service
 from src.api.validators import check_cafe_exists, check_name_duplicate
 from src.core.db import get_session
+from src.core.user import current_manager, current_superuser, current_user
 from src.crud.cafe import cafe_crud
-from src.schemas.cafe import CafeCreate, CafeInfo, CafeShortInfo, CafeUpdate
+from src.models.cafe import Cafe
+from src.models.user import User
+from src.schemas.cafe import (
+    CafeBase,
+    CafeCreate,
+    CafeInfo,
+    CafeShortInfo,
+    CafeUpdate,
+)
 
 router = APIRouter()
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
@@ -15,102 +26,105 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 @router.post(
     '/',
     response_model=CafeInfo,
-    response_model_exclude_none=True,
-    # dependencies=
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(current_superuser)],
 )
 async def create_new_cafe(
-    cafe: CafeCreate,
+    cafe_in: CafeCreate,
     session: SessionDep,
-) -> object:
-    """Создать кафе. Для менеджеров."""
-    await check_name_duplicate(cafe.name, session)
+) -> Cafe:
+    """Создать кафе. Доступ только у суперадминистратора."""
+    try:
+        await check_name_duplicate(cafe_in.name, session)
+        cafe_base_data = CafeBase(**cafe_in.model_dump())
 
-    new_cafe = await cafe_crud.create(
-        cafe,
-        session,
-    )
-    return {
-        'id': new_cafe.id,
-        'name': new_cafe.name,
-        'address': new_cafe.address,
-        'phone': new_cafe.phone,
-        'description': new_cafe.description,
-        'photo_id': new_cafe.photo_id,
-        'is_active': True,
-        'created_at': new_cafe.created_at,
-        'updated_at': new_cafe.updated_at,
-        'managers': [],
-    }
-    # await session.refresh(new_cafe)
-    # return new_cafe
+        new_cafe = await cafe_crud.create(obj_in=cafe_base_data, session=session)
+
+        if cafe_in.managers_id:
+            attached_managers = await update_cafe_managers_service(
+                cafe_id=new_cafe.id,
+                session=session,
+                managers_id=cafe_in.managers_id,
+            )
+
+        new_cafe.managers = attached_managers
+
+        return new_cafe
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f'Сбой {str(e)} | тип {type(e).__name__}')
 
 
 @router.get(
     '/',
     response_model=list[CafeShortInfo],
-    # response_model_exclude_none=True,
+    dependencies=[Depends(current_user)],
 )
 async def get_all_cafe(
     session: SessionDep,
-) -> list[object]:
-    """Получить список кафе."""
+) -> list[Cafe]:
+    """Получить список кафе. Только для зарегистрированных пользователей."""
     return await cafe_crud.get_multi(session)
+
+
+@router.get(
+    '/{cafe_id}',
+    response_model=CafeInfo,
+    # dependencies=[Depends(current_user)],
+)
+async def get_cafe_by_id(
+    cafe_id: int,
+    session: SessionDep,
+    user: Optional[User] = Depends(current_user),
+) -> Cafe:
+    """Получить информацию о кафе по ID."""
+    db_cafe = await cafe_crud.get(cafe_id, session)
+    if not db_cafe:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Кафе отсутствует в БД',
+        )
+    is_staff = user and user.role in ['ADMIN', 'MANAGER']
+    if not is_staff:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Доступно только для менеджера или админа',
+        )
+
+    return await add_managers_to_cafe_by_id(db_cafe, session)
 
 
 @router.patch(
     '/{cafe_id}',
     response_model=CafeInfo,
     response_model_exclude_none=True,
-    # dependencies=
+    dependencies=[Depends(current_manager)],
 )
 async def partial_update_cafe(
     cafe_id: int,
     obj_in: CafeUpdate,
     session: SessionDep,
-) -> object:
+) -> Cafe:
     """Редактировать кафе."""
-    db_cafe = await check_cafe_exists(
-        cafe_id,
-        session,
-    )
+    db_cafe = await check_cafe_exists(cafe_id, session)
+
     if obj_in.name is not None:
         await check_name_duplicate(obj_in.name, session)
+
     db_cafe = await cafe_crud.update(
         db_cafe,
         obj_in,
         session,
     )
+
+    attached_managers = await update_cafe_managers_service(
+        cafe_id=db_cafe.id,
+        session=session,
+        managers_id=obj_in.managers_id,
+    )
+
+    db_cafe.managers = attached_managers
+
     await session.commit()
-    await session.refresh(db_cafe)
-    return {
-        'id': db_cafe.id,
-        'name': db_cafe.name,
-        'address': db_cafe.address,
-        'phone': db_cafe.phone,
-        'description': db_cafe.description,
-        'photo_id': db_cafe.photo_id,
-        'is_active': True,
-        'created_at': db_cafe.created_at,
-        'updated_at': db_cafe.updated_at,
-        'managers': [],
-    }
-
-
-# @router.delete(
-#     '/{cafe_id}',
-#     response_model=CafeInfo,
-#     # dependencies=
-# )
-# async def remove_cafe(
-#     cafe_id: int,
-#     session: AsyncSession,
-# ) -> None:
-#     """Удалить кафе."""
-#     db_cafe = await check_cafe_exists(
-#         cafe_id,
-#         session,
-#     )
-#     return await cafe_crud.remove(
-#         db_cafe,
-#         session,
-#     )
+    return db_cafe

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.crud.base import CRUDBase
 from src.models.cafe import Cafe
 from src.models.user import User
-from src.schemas.cafe import CafeCreate
+from src.schemas.cafe import CafeBase
 
 
 class CRUDCafe(CRUDBase):
@@ -17,7 +17,7 @@ class CRUDCafe(CRUDBase):
         cafe_name: str,
         session: AsyncSession,
     ) -> Optional[int]:
-        """Метод возвращает id объекта по названию."""
+        """Метод возвращает id кафе по названию."""
         db_cafe_id = await session.execute(
             select(Cafe.id).where(
                 Cafe.name == cafe_name,
@@ -27,21 +27,16 @@ class CRUDCafe(CRUDBase):
 
     async def create(
         self,
-        obj_in: CafeCreate,
+        obj_in: CafeBase,
         session: AsyncSession,
+        user: User = None,
     ) -> Cafe:
-        """Метод записи в базу кафе с привязкой менеджеров."""
-        obj_in_data = obj_in.model_dump()
-        managers_id = obj_in_data.pop('managers_id', [])
-        db_obj = self.model(**obj_in_data)
-        if managers_id:
-            query = select(User).where(User.id.in_(managers_id))
-            result = await session.execute(query)
-            found_managers = result.scalars().all()
-            db_obj.managers = list(found_managers)
+        """Метод создает кафе без привязки менеджеров."""
+        db_obj = self.model(**obj_in.model_dump())
+        db_obj.managers = []
         session.add(db_obj)
         await session.commit()
-        await session.refresh(db_obj)
+        await session.flush()
         return db_obj
 
 

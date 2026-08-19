@@ -4,9 +4,11 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.schemas.user import UserBase
 
-class CafeCreate(BaseModel):
-    """Схема создания кафе."""
+
+class CafeBase(BaseModel):
+    """Чистая схема кафе без привязки к менеджерам."""
 
     name: str = Field(
         description='Название кафе',
@@ -25,7 +27,15 @@ class CafeCreate(BaseModel):
         default_factory=UUID,
         description='Уникальный идентификатор изображения кафе',
     )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CafeCreate(CafeBase):
+    """Схема создания кафе с привязкой менеджеров."""
+
     managers_id: list[int] = Field(
+        default_factory=list,
         description='Менеджеры проекта',
     )
 
@@ -43,36 +53,32 @@ class CafeShortInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CafeManagersInfo(UserBase):
+    """Вложенная схема для получения информации о менеджерах кафе."""
+
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CafeInfo(CafeShortInfo):
     """Схема для работы кафе с БД."""
 
-    managers: List[object] = Field()
-    is_active: bool = Field()
-    created_at: datetime = Field()
-    updated_at: datetime | None = Field(default=None)
-    managers: List[object] = Field(default_factory=List[object])
     is_active: bool = Field(default_factory=bool)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime | None
-
-    model_config = ConfigDict(from_attributes=True)
+    managers: list[CafeManagersInfo] = Field(
+        default_factory=list, description='Менеджеры кафе')
 
 
 class CafeUpdate(CafeCreate):
     """Схема редактирования кафе."""
 
-    name: str = Field(
-        default_factory=str,
+    name: str | None  = Field(default=None)
+    address: str | None = Field(default=None)
+    phone: str | None = Field(default=None)
+    managers_id: list[int] | None = Field(
+        default=None,
+        description='Новый список менеджеров проекта',
     )
-    address: str = Field(
-        default_factory=str,
-    )
-    phone: str = Field(
-        default_factory=str,
-    )
-    managers_id: list[int] = Field(
-        default_factory=list[int],
-    )
-    is_active: bool = Field(
-        default_factory=bool,
-    )
+    is_active: bool = Field(default=True)
