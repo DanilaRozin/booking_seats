@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.models.cafe import Cafe
-from src.models.user import User
+from models.cafe import Cafe
+from models.user import User
 
 
 async def update_cafe_managers_service(
@@ -21,8 +21,7 @@ async def update_cafe_managers_service(
     result_managers = await session.execute(query)
     found_managers = list(result_managers.scalars().all())
 
-    cafe_managers_link = select(Cafe).where(
-        Cafe.id == cafe.id).options(selectinload(Cafe.managers))
+    cafe_managers_link = select(Cafe).where(Cafe.id == cafe.id).options(selectinload(Cafe.managers))
 
     result = await session.execute(cafe_managers_link)
     if not result.scalar_one_or_none():
@@ -38,8 +37,7 @@ async def add_managers_to_cafe_by_id(
     session: AsyncSession,
 ) -> Cafe:
     """Сервисный метод получения списка менеджеров."""
-    cafe_managers_link = select(Cafe).where(
-        Cafe.id == cafe_obj.id).options(selectinload(Cafe.managers))
+    cafe_managers_link = select(Cafe).where(Cafe.id == cafe_obj.id).options(selectinload(Cafe.managers))
 
     result = await session.execute(cafe_managers_link)
     refreshed = result.scalar_one_or_none()

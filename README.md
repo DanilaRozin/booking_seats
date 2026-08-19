@@ -154,4 +154,5 @@
    - Выполнить команду `docker compose up --build`. Для запуска в режиме демона добавить ключ `-d`. Дождаться запуска контейнера.
    - Проект запустится на 8000 порту.
 
-uv run python -m src.main
+Запуск проекта из src: uv run python -m main
+Исправление импортов RUFF: uv run ruff check --select I --fix .

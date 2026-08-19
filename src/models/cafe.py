@@ -3,17 +3,17 @@ import uuid
 from sqlalchemy import Column, ForeignKey, Integer, String, Table, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.db import Base, CommonMixin
+from core.base_model import Base
 
 cafe_manager_connect = Table(
     'cafes_managers',
     Base.metadata,
-    Column('cafe_id', Integer, ForeignKey('cafe.id'), primary_key=True),
+    Column('cafe_id', Integer, ForeignKey('cafes.id'), primary_key=True),
     Column('user_id', Integer, ForeignKey('user.id'), primary_key=True),
 )
 
 
-class Cafe(CommonMixin, Base):
+class Cafe(Base):
     """Модель кафе."""
 
     name: Mapped[str] = mapped_column(

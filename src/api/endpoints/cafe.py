@@ -86,7 +86,7 @@ async def get_cafe_by_id(
             detail='Кафе отсутствует в БД',
         )
     is_staff = user and user.role in ['ADMIN', 'MANAGER']
-    if not is_staff:
+    if not is_staff:  # and not db_cafe.is_active
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Доступно только для менеджера или админа',
