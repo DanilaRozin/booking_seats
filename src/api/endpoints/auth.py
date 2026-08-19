@@ -4,14 +4,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.db import get_session
-from src.core.user import UserManager, auth_backend, get_user_manager
-from src.schemas.user import UserLogin
+from schemas.user import UserLogin
+
+from core.db import get_session
+from core.user import UserManager, auth_backend, get_user_manager
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-router = APIRouter(prefix='/auth', tags=['Аутентификация'])
+router = APIRouter()
 
 
 @dataclass
@@ -23,15 +24,21 @@ class _Credentials:
 @router.post(
     '/login',
     summary='Получение токена авторизации',
-    description='Возращает токен для последующей авторизации пользователя',
 )
 async def login(
     credentials: UserLogin,
     user_manager: UserManager = Depends(get_user_manager),
 ) -> Response:
-    """Аутентифицирует пользователя по email и паролю, возвращает JWT-токен."""
+    """Аутентифицирует пользователя по email и паролю, возвращает JWT-токен.
+
+    - **login**: Адрес электроной почти или номер телефона
+    - **password**: пароль
+
+    Если пользователь с указаными login/password существует, то вернётся JWT токен.
+    """
     user = await user_manager.authenticate(
-        _Credentials(username=credentials.login, password=credentials.password),
+        login=credentials.login,
+        password=credentials.password,
     )
     if user is None or not user.is_active:
         raise HTTPException(

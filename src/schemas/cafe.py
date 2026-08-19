@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import List
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.schemas.user import UserBase
+from schemas.base_schema import BaseSchema
+from schemas.user import UserBase
 
 
 class CafeBase(BaseModel):
@@ -82,3 +82,7 @@ class CafeUpdate(CafeCreate):
         description='Новый список менеджеров проекта',
     )
     is_active: bool = Field(default=True)
+
+
+class CafeInfo(BaseSchema):
+    """Схема представления из базы данных объетов модели "Кафе"."""

@@ -4,20 +4,20 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.services.cafe import add_managers_to_cafe_by_id, update_cafe_managers_service
-from src.api.validators import check_cafe_exists, check_name_duplicate
-from src.core.db import get_session
-from src.core.user import current_manager, current_superuser, current_user
-from src.crud.cafe import cafe_crud
-from src.models.cafe import Cafe
-from src.models.user import User
-from src.schemas.cafe import (
+from api.services.cafe import add_managers_to_cafe_by_id, update_cafe_managers_service
+from api.validators import check_cafe_exists, check_name_duplicate
+from crud.cafe import cafe_crud
+from models import Cafe, User
+from schemas.cafe import (
     CafeBase,
     CafeCreate,
     CafeInfo,
     CafeShortInfo,
     CafeUpdate,
 )
+
+from core.db import get_session
+from core.user import current_manager, current_superuser, current_user
 
 router = APIRouter()
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
@@ -71,7 +71,7 @@ async def get_all_cafe(
 @router.get(
     '/{cafe_id}',
     response_model=CafeInfo,
-    # dependencies=[Depends(current_user)],
+    dependencies=[Depends(current_user)],
 )
 async def get_cafe_by_id(
     cafe_id: int,

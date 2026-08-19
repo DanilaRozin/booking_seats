@@ -1,8 +1,25 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.crud.cafe import cafe_crud
-from src.models.cafe import Cafe
+from crud import table_crud
+from crud.cafe import cafe_crud
+from models import Table
+from models.cafe import Cafe
+
+
+async def check_table_exists(
+    cafe_id: int,
+    table_id: int,
+    session: AsyncSession,
+) -> Table:
+    """Проверка существования в БД стола в кафе."""
+    table = await table_crud.get(table_id, session, Table.cafe_id == cafe_id)
+    if table is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Стола не существует!',
+        )
+    return table
 
 
 async def check_name_duplicate(
