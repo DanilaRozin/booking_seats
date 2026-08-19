@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,15 +11,9 @@ from schemas.user import UserBase
 class CafeBase(BaseModel):
     """Чистая схема кафе без привязки к менеджерам."""
 
-    name: str = Field(
-        description='Название кафе',
-    )
-    address: str = Field(
-        description='Адрес кафе',
-    )
-    phone: str = Field(
-        description='Контактный телефон',
-    )
+    name: Annotated[str, Field(description='Название кафе')]
+    address: Annotated[str, Field(description='Адрес кафе')]
+    phone: Annotated[str, Field(description='Контактный телефон')]
     description: str = Field(
         default_factory=str,
         description='О кафе',
@@ -64,9 +59,9 @@ class CafeManagersInfo(UserBase):
 class CafeInfo(CafeShortInfo):
     """Схема для работы кафе с БД."""
 
-    is_active: bool = Field(default_factory=bool)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime | None
+    is_active: bool = Field(default_factory=bool)  # delete?
+    created_at: datetime = Field(default_factory=datetime.now)   # delete?
+    updated_at: datetime | None   # delete?
     managers: list[CafeManagersInfo] = Field(
         default_factory=list, description='Менеджеры кафе')
 
@@ -82,6 +77,8 @@ class CafeUpdate(CafeCreate):
         description='Новый список менеджеров проекта',
     )
     is_active: bool = Field(default=True)
+
+    # model_config = ConfigDict(from_attributes=True) - это есть в базовой схеме
 
 
 class CafeInfo(BaseSchema):
