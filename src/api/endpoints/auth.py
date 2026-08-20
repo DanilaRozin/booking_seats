@@ -1,23 +1,17 @@
-from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.db import get_session
-from src.core.user import UserManager, auth_backend, get_user_manager
-from src.schemas.user import UserLogin
+from schemas.user import UserLogin
+
+from core.db import get_session
+from core.user import UserManager, auth_backend, get_user_manager
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
 router = APIRouter()
-
-
-@dataclass
-class _Credentials:
-    username: str
-    password: str
 
 
 @router.post(
@@ -39,10 +33,15 @@ async def login(
         login=credentials.login,
         password=credentials.password,
     )
-    if user is None or not user.is_active:
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='LOGIN_BAD_CREDENTIALS',
+            detail='Введены некорректные данные.',
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f'Учетная запись заблокирована! Ваш id {user.id}. Обратитесь к администрации',
         )
 
     strategy = auth_backend.get_strategy()

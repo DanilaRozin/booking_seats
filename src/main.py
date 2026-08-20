@@ -2,7 +2,8 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from api.routers import main_router, tags
 
@@ -45,3 +46,17 @@ async def index() -> dict:
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Возращает ошибки в формате {"message":...}."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={'message': exc.detail},
+    )
+
+
+app.include_router(main_router)
+
+if __name__ == '__main__':
+    uvicorn.run(app, host='0.0.0.0', port=8000)
