@@ -6,7 +6,9 @@ from fastapi import FastAPI
 
 from api.routers import main_router, tags
 
+from core.logging_config import configure_logging
 from core.settings import settings
+from middleware.logging_context import logging_context_middleware
 
 
 @asynccontextmanager
@@ -16,6 +18,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     yield
     # TODO: Добавить код, выполняемый при остановке приложения
 
+configure_logging(
+    log_dir="logs",
+    level="INFO",
+    rotation="00:00",
+    retention=10,
+)
 
 app = FastAPI(
     title=settings.title,
@@ -23,23 +31,17 @@ app = FastAPI(
     description=settings.description,
     openapi_tags=tags.tag_list,
 )
+
+app.middleware("http")(logging_context_middleware)
 app.include_router(main_router)
 
 
-@app.get(
-    path='/',
-    response_model=dict,
-)
+@app.get("/", response_model=dict)
 async def index() -> dict:
-    """Основная страница."""
     return {
-        'app': f'{settings.title} ({settings.version})',
-        'description': settings.description,
-        'status': 'OK',
+        "app": f"{settings.title} ({settings.version})",
+        "status": "OK",
     }
 
-
-app.include_router(main_router)
-
-if __name__ == '__main__':
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
