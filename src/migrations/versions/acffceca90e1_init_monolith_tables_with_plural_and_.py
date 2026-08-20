@@ -1,4 +1,4 @@
-"""init_monolith_tables_with_plural_and_active
+"""init_monolith_tables_with_plural_and_active.
 
 Revision ID: acffceca90e1
 Revises:
