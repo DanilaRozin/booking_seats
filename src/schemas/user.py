@@ -63,6 +63,7 @@ class UserAdminUpdate(UserUpdate):
     """Схема для обновления пользователя Администратором."""
 
     role: RoleEnum | None = None
+    managed_id: int | None = None
 
 
 class UserLogin(BaseModel):
