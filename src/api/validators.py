@@ -1,10 +1,10 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import table_crud
 from crud.cafe import cafe_crud
-from models import Table
+from crud.table import table_crud
 from models.cafe import Cafe
+from models.table import Table
 
 
 async def check_table_exists(

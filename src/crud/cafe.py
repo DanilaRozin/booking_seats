@@ -66,4 +66,4 @@ class CRUDCTable(CRUDBase[Cafe]):
 
 
 cafe_crud = CRUDCafe(Cafe)
-cafe_crud = CRUDCTable(Cafe)
+table_crud = CRUDCTable(Cafe)

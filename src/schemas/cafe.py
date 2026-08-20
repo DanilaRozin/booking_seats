@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -11,9 +10,9 @@ from schemas.user import UserBase
 class CafeBase(BaseModel):
     """Чистая схема кафе без привязки к менеджерам."""
 
-    name: Annotated[str, Field(description='Название кафе')]
-    address: Annotated[str, Field(description='Адрес кафе')]
-    phone: Annotated[str, Field(description='Контактный телефон')]
+    name: str = Field(description='Название кафе')
+    address: str = Field(description='Адрес кафе')
+    phone: str = Field(description='Контактный телефон')
     description: str = Field(
         default_factory=str,
         description='О кафе',
@@ -60,16 +59,15 @@ class CafeInfo(CafeShortInfo):
     """Схема для работы кафе с БД."""
 
     is_active: bool = Field(default_factory=bool)  # delete?
-    created_at: datetime = Field(default_factory=datetime.now)   # delete?
-    updated_at: datetime | None   # delete?
-    managers: list[CafeManagersInfo] = Field(
-        default_factory=list, description='Менеджеры кафе')
+    created_at: datetime = Field(default_factory=datetime.now)  # delete?
+    updated_at: datetime | None  # delete?
+    managers: list[CafeManagersInfo] = Field(default_factory=list, description='Менеджеры кафе')
 
 
 class CafeUpdate(CafeCreate):
     """Схема редактирования кафе."""
 
-    name: str | None  = Field(default=None)
+    name: str | None = Field(default=None)
     address: str | None = Field(default=None)
     phone: str | None = Field(default=None)
     managers_id: list[int] | None = Field(
