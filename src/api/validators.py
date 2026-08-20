@@ -1,11 +1,11 @@
-from http import HTTPStatus
-
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from crud import table_crud
+from models import Table
 
 from src.crud.time_slots import slot_crud
 from src.models.cafe import Cafe
-from src.models.time_slots import Slot
 
 
 async def check_cafes_exists(
@@ -19,24 +19,22 @@ async def check_cafes_exists(
     )
     if cafe is None:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Кафе {cafe_id} не найдено.',
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Кафе {cafe_id} не найдено.',
         )
     return cafe
 
 
-async def check_slots_exists(
-    slot_id: int,
+async def check_table_exists(
+    cafe_id: int,
+    table_id: int,
     session: AsyncSession,
-) -> Slot:
-    """Проверка слота на существование."""
-    slot = await slot_crud.get(
-        slot_id,
-        session,
-    )
-    if slot is None:
+) -> Table:
+    """Проверка существования в БД стола в кафе."""
+    table = await table_crud.get(table_id, session, Table.cafe_id == cafe_id)
+    if table is None:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Временной слот {slot_id} не найден.',
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Стола не существует!',
         )
-    return slot
+    return table

@@ -3,6 +3,6 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.db import get_session
+from core.db import get_session
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
