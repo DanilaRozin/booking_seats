@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 from datetime import time
 
 from sqlalchemy import CheckConstraint, ForeignKey, String, Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from models.cafe import Cafe
 
 from core.base_model import Base
 
@@ -17,7 +21,10 @@ class Slot(Base):
         nullable=True,
     )
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
-    cafe = relationship('Cafe', back_populates='slots', lazy='selectin')
+    cafe: Mapped[Cafe] = relationship(
+        back_populates='slots',
+        lazy='selectin',
+    )
 
     __table_args__ = (
         CheckConstraint(

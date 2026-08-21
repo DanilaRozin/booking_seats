@@ -1,5 +1,5 @@
-from src.crud.base import CRUDBase
-from src.models import User
+from crud.base import CRUDBase
+from models import User
 
 
 class CRUDUser(CRUDBase):

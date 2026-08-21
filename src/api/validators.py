@@ -5,6 +5,9 @@ from crud import table_crud
 from crud.time_slots import slot_crud
 from models import Table
 from models.cafe import Cafe
+from schemas.user import UserCreate
+
+from core.user import UserManager
 
 
 async def check_cafes_exists(
@@ -37,3 +40,23 @@ async def check_table_exists(
             detail='Стола не существует!',
         )
     return table
+
+
+async def existing_user(user_create: UserCreate, user_manager: UserManager) -> None:
+    """Проверка заняты ли username, email или phone(номер телефона)."""
+    if await user_manager.user_db.get_by_email(user_create.email) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Указанный email занят.',
+        )
+
+    if await user_manager.user_db.get_by_phone(user_create.phone) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Указанный номер телефона занят.',
+        )
+    if await user_manager.user_db.get_by_username(user_create.username) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Указанный username занят.',
+        )
