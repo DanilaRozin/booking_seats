@@ -10,13 +10,14 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from models import User
+from schemas.user import UserCreate
+from schemas.validators import validate_phone_number
+
 from .constants import PASSWORD_MIN_LEN, RoleEnum
 from .db import get_session
 from .settings import settings
 from .utils import is_email
-from src.models import User
-from src.schemas.user import UserCreate
-from src.schemas.validators import validate_phone_number
 
 
 class UserDatabase(SQLAlchemyUserDatabase):
@@ -26,6 +27,11 @@ class UserDatabase(SQLAlchemyUserDatabase):
         """Получаем юзера по номеру телефона."""
         phone = validate_phone_number(phone)
         statement = select(self.user_table).where(self.user_table.phone == phone)
+        return await self._get_user(statement)
+
+    async def get_by_username(self, username: str) -> User | None:
+        """Получаем юзера по номеру телефона."""
+        statement = select(self.user_table).where(self.user_table.username == username)
         return await self._get_user(statement)
 
 
@@ -103,6 +109,9 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         if user.email in password:
             error = 'Пароль не может содержать ваш email'
             raise InvalidPasswordException(reason=error)
+        if user.username in password:
+            error = 'Пароль не может содержать ваш username'
+            raise InvalidPasswordException(reason=error)
 
     async def on_after_register(self, user: User, request: Optional[Request] = None) -> None:
         """Логирует успешную регистрацию пользователя."""
@@ -140,7 +149,38 @@ def require_role(*allowed_roles: RoleEnum) -> Callable[[User], Coroutine[Any, An
 
 fastapi_users = FastAPIUsers[User, int](get_user_manager, [auth_backend])
 
+# Пользователь
 current_user = fastapi_users.current_user(active=True)
+
+
+# Менеджер
+async def current_manager(
+    cafe_id: int | None = None,
+    user: User = Depends(require_role(RoleEnum.MANAGER, RoleEnum.ADMIN)),
+) -> User:
+    """Проверка является ли юзер менеджером.
+
+    В случае если в ендпоинте есть {cafe_id},
+    которое потом используется в функции как cafe_id: int,
+
+    Данная функция будет проверять является ли юзер менеджером кафе с cafe_id.
+    Если такой переменной нет, то функция будет проверять наличие роли MANAGER у юзера.
+
+    В случае если пользователь имеет роль ADMIN или является superuser
+    - проверка будет пройдена всегда.
+    """
+    if user.is_superuser or user.role == RoleEnum.ADMIN or cafe_id is None:
+        return user
+    if user.managed_cafe_id != cafe_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Вы не являетесь менеджером данного кафе.',
+        )
+    return user
+
+
+# Администратор
 current_admin = require_role(RoleEnum.ADMIN)
-current_manager = require_role(RoleEnum.MANAGER, RoleEnum.ADMIN)
+
+# Суперюзер
 current_superuser = fastapi_users.current_user(active=True, superuser=True)
