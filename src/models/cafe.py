@@ -30,3 +30,8 @@ class Cafe(Base):
         'User',
         back_populates='managed_cafe_id',
     )
+
+    # last_table_number: Mapped[int] = mapped_column(
+    #     SmallInteger,
+    #     default=0,
+    # )

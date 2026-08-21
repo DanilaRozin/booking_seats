@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import BOOLEAN, DateTime, Integer, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 def get_utc_now() -> datetime:
@@ -11,12 +11,6 @@ def get_utc_now() -> datetime:
 
 class PreBase:
     """Описание параметров для всех таблиц."""
-
-    @declared_attr.directive
-    @classmethod
-    def __tablename__(cls) -> str:  # noqa: N805
-        """Возвращает имя таблицы на основе названия класса."""
-        return f'{cls.__name__.lower()}s'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     is_active: Mapped[bool] = mapped_column(BOOLEAN, default=True, server_default='true')
@@ -35,5 +29,3 @@ class PreBase:
 
 class Base(PreBase, DeclarativeBase):
     """Базовый класс для всех таблиц."""
-
-    pass

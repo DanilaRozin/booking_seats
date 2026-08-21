@@ -1,17 +1,18 @@
+from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Depends, Path, Query
 
-from api import SessionDep
-from api.validators import check_table_exists
+from api import SessionDep, UserDep
+from api.validators import check_cafe_exists, check_table_exists
 from crud import cafe_crud, table_crud
 from models import Table
 from schemas.table import TableCreate, TableInfo, TableUpdate
 
-router = APIRouter()
+from core.constants import RoleEnum
+from core.user import current_manager
 
-# TODO: Сделать разграничение прав доступа к ресурсам.
-# TODO: Добавить валидацию.
+router = APIRouter()
 
 
 @router.get(
@@ -21,6 +22,7 @@ router = APIRouter()
 )
 async def get_all_tables(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
+    user: UserDep,
     session: SessionDep,
     show_active: Annotated[
         bool | None,
@@ -28,13 +30,20 @@ async def get_all_tables(
             description=('Показывать все столы в кафе, только активные или только не активные.'),
         ),
     ] = None,
-) -> list[Table]:
+) -> Sequence[Table]:
     """Получение списка доступных для бронирования столов в кафе.
 
     Для администраторов и менеджеров - все столы (с возможностью выбора), для
     пользователей - только активные.
 
+    По умолчанию показывает:
+    - для администратора - все столы в кафе
+    - для менеджера - активные столы в кафе
+
     """
+    await check_cafe_exists(cafe_id, session)
+    if user.role == RoleEnum.MANAGER and show_active is None or user.role == RoleEnum.USER:
+        show_active = True
     conditions = [Table.cafe_id == cafe_id]
     if show_active is not None:
         conditions.append(Table.is_active.is_(show_active))
@@ -53,6 +62,7 @@ async def get_all_tables(
 async def get_table(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
     table_id: Annotated[int, Path(description='ID стола', gt=0)],
+    user: UserDep,
     session: SessionDep,
 ) -> Table | None:
     """Получение информации о столе в кафе по его ID.
@@ -61,13 +71,17 @@ async def get_table(
     активные.
 
     """
-    return await table_crud.get(table_id, session, Table.cafe_id == cafe_id)
+    conditions = [Table.cafe_id == cafe_id]
+    if user.role == RoleEnum.USER:
+        conditions.append(Table.is_active.is_(True))
+    return await table_crud.get(table_id, session, *conditions)
 
 
 @router.post(
     '/',
     response_model=TableInfo,
     summary='Новый стол в кафе',
+    dependencies=[Depends(current_manager)],
 )
 async def create_table(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
@@ -79,6 +93,7 @@ async def create_table(
     Только для администраторов и менеджеров.
 
     """
+    await check_cafe_exists(cafe_id, session)
     table_number = cafe_crud.get_new_table_number(cafe_id, session)
 
     return await table_crud.create(
@@ -92,6 +107,7 @@ async def create_table(
     '/{table_id}',
     response_model=TableInfo,
     summary='Обновление информации о столе в кафе по его ID',
+    dependencies=[Depends(current_manager)],
 )
 async def update_table(
     cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
