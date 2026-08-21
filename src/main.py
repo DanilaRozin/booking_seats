@@ -6,7 +6,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from api.routers import main_router, tags
+from middleware.logging_context import logging_context_middleware
 
+from core.logging_config import configure_logging
 from core.settings import settings
 
 
@@ -24,13 +26,39 @@ app = FastAPI(
     description=settings.description,
     openapi_tags=tags.tag_list,
 )
-app.include_router(main_router)
 
 
-@app.get(
-    path='/',
-    response_model=dict,
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+    request: Request,
+    exception: HTTPException,
+) -> JSONResponse:
+    """Обрабатывает HTTP-исключение и изменяет названия полей ответа.
+
+    Преобразует названия полей ответа в значения "status" и "message".
+
+    """
+    return JSONResponse(
+        status_code=exception.status_code,
+        content={
+            'status': exception.status_code,
+            'message': exception.detail,
+        },
+        headers=exception.headers,
+    )
+
+
+configure_logging(
+    log_dir='logs',
+    level='INFO',
+    rotation='00:00',
+    retention=10,
 )
+
+app.middleware('http')(logging_context_middleware)
+
+
+@app.get('/', response_model=dict)
 async def index() -> dict:
     """Основная страница."""
     return {
@@ -38,15 +66,6 @@ async def index() -> dict:
         'description': settings.description,
         'status': 'OK',
     }
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    """Возращает ошибки в формате {"message":...}."""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={'message': exc.detail},
-    )
 
 
 app.include_router(main_router)

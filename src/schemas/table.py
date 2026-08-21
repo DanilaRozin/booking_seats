@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
 from schemas.base_schema import BaseSchema
 from schemas.cafe import CafeInfo
@@ -15,7 +15,7 @@ class TableBase(BaseModel):
         str | None,
         Field(max_length=TABLE_DESC_LENGTH),
     ] = None
-    seat_count: Annotated[int | None, Field(ge=1, examples=[1])] = None
+    seat_number: Annotated[PositiveInt | None, Field(ge=1, examples=[1])] = None
 
     model_config = ConfigDict(extra='forbid')
 
@@ -23,7 +23,7 @@ class TableBase(BaseModel):
 class TableCreate(TableBase):
     """Схема тела запроса на создание объекта "Столов"."""
 
-    seat_count: int = Field(ge=1, examples=[1])
+    seat_number: Annotated[PositiveInt, Field(ge=1, examples=[1])]
 
 
 class TableUpdate(TableBase):
