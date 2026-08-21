@@ -20,13 +20,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # TODO: Добавить код, выполняемый при остановке приложения
 
 
-configure_logging(
-    log_dir='logs',
-    level='INFO',
-    rotation='00:00',
-    retention=10,
-)
-
 app = FastAPI(
     title=settings.title,
     version=settings.version,
@@ -55,21 +48,24 @@ async def http_exception_handler(
     )
 
 
+configure_logging(
+    log_dir='logs',
+    level='INFO',
+    rotation='00:00',
+    retention=10,
+)
+
 app.middleware('http')(logging_context_middleware)
 
 
 @app.get('/', response_model=dict)
 async def index() -> dict:
-    """Главная страница API: возвращает метаданные приложения и статус."""
+    """Основная страница."""
     return {
         'app': f'{settings.title} ({settings.version})',
         'description': settings.description,
         'status': 'OK',
     }
-
-
-if __name__ == '__main__':
-    uvicorn.run(app, host='0.0.0.0', port=8000)
 
 
 app.include_router(main_router)
