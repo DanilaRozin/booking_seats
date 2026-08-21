@@ -2,7 +2,7 @@ from datetime import datetime, time
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.schemas.validators import check_start_and_end_time
+from schemas.validators import check_start_and_end_time
 
 
 class BaseSchemasSlots(BaseModel):
