@@ -1,8 +1,6 @@
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
-from sqlalchemy import CheckConstraint, Enum, String
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from models.cafe import cafe_manager_connect
 
 from core.base_model import Base
 from core.constants import NAME_MAX_LENGTH, RoleEnum
@@ -19,8 +17,12 @@ class User(SQLAlchemyBaseUserTable[int], Base):
         default=RoleEnum.USER,
         nullable=False,
     )
-    managed_cafes: Mapped[list['Cafe']] = relationship(  # noqa # type: ignore
-        secondary=cafe_manager_connect,
+    cafe_id: Mapped[int | None] = mapped_column(
+        ForeignKey('cafes.id', ondelete='SET NULL'),
+        nullable=True,
+    )
+    managed_cafe_id: Mapped['Cafe'] = relationship(  # noqa # type: ignore
+        'Cafe',
         back_populates='managers',
     )
     __table_args__ = (CheckConstraint('length(username) >= 5', name='name_min_length'),)

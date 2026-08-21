@@ -3,7 +3,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from schemas.base_schema import BaseSchema
 from schemas.user import UserBase
 
 
@@ -13,12 +12,8 @@ class CafeBase(BaseModel):
     name: str = Field(description='Название кафе')
     address: str = Field(description='Адрес кафе')
     phone: str = Field(description='Контактный телефон')
-    description: str = Field(
-        default_factory=str,
-        description='О кафе',
-    )
+    description: str = Field(description='О кафе')
     photo_id: UUID = Field(
-        default_factory=UUID,
         description='Уникальный идентификатор изображения кафе',
     )
 
@@ -29,7 +24,6 @@ class CafeCreate(CafeBase):
     """Схема создания кафе с привязкой менеджеров."""
 
     managers_id: list[int] = Field(
-        default_factory=list,
         description='Менеджеры проекта',
     )
 
@@ -37,12 +31,12 @@ class CafeCreate(CafeBase):
 class CafeShortInfo(BaseModel):
     """Краткая схема кафе."""
 
-    id: int = Field(default_factory=int)
-    name: str = Field(default_factory=str)
-    address: str = Field(default_factory=str)
-    phone: str = Field(default_factory=str)
-    description: str = Field(default_factory=str)
-    photo_id: UUID = Field(default_factory=UUID)
+    id: int = Field()
+    name: str = Field()
+    address: str = Field()
+    phone: str = Field()
+    description: str = Field()
+    photo_id: UUID = Field()
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -58,10 +52,10 @@ class CafeManagersInfo(UserBase):
 class CafeInfo(CafeShortInfo):
     """Схема для работы кафе с БД."""
 
-    is_active: bool = Field(default_factory=bool)  # delete?
-    created_at: datetime = Field(default_factory=datetime.now)  # delete?
+    is_active: bool = Field()  # delete?
+    created_at: datetime = Field()  # delete?
     updated_at: datetime | None  # delete?
-    managers: list[CafeManagersInfo] = Field(default_factory=list, description='Менеджеры кафе')
+    managers: list[CafeManagersInfo] = Field(description='Менеджеры кафе')
 
 
 class CafeUpdate(CafeCreate):
@@ -77,7 +71,3 @@ class CafeUpdate(CafeCreate):
     is_active: bool = Field(default=True)
 
     # model_config = ConfigDict(from_attributes=True) - это есть в базовой схеме
-
-
-class CafeInfo(BaseSchema):
-    """Схема представления из базы данных объетов модели "Кафе"."""

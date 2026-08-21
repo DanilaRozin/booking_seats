@@ -111,7 +111,7 @@ class CRUDBase(Generic[ModelT]):
         db_obj: ModelT,
         obj_in: BaseModel,
         session: AsyncSession,
-    # ) -> Any:
+        # ) -> Any:
         # """Универсальный метод обновления объекта в БД."""
     ) -> ModelT:
         """Обновляет объект модели.

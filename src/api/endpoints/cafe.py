@@ -4,7 +4,10 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.services.cafe import add_managers_to_cafe_by_id, update_cafe_managers_service
+from api.services.cafe import (
+    add_managers_to_cafe_by_id,
+    update_cafe_managers_service,
+)
 from api.validators import check_cafe_exists, check_name_duplicate
 from crud.cafe import cafe_crud
 from models import Cafe, User
@@ -97,7 +100,7 @@ async def get_cafe_by_id(
 
 @router.patch(
     '/{cafe_id}',
-    response_model=CafeInfo,
+    response_model=CafeBase,
     response_model_exclude_none=True,
     dependencies=[Depends(current_manager)],
 )
@@ -118,13 +121,13 @@ async def partial_update_cafe(
         session,
     )
 
-    attached_managers = await update_cafe_managers_service(
-        cafe_id=db_cafe.id,
-        session=session,
-        managers_id=obj_in.managers_id,
-    )
+    # attached_managers = await update_cafe_managers_service(
+    #     cafe_id=db_cafe.id,
+    #     session=session,
+    #     managers_id=obj_in.managers_id,
+    # )
 
-    db_cafe.managers = attached_managers
+    # db_cafe.managers = attached_managers
 
     await session.commit()
     return db_cafe

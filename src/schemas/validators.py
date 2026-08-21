@@ -4,8 +4,9 @@ from phonenumbers import NumberParseException
 
 def validate_phone_number(value: str | None) -> str | None:
     """Валидация введеного номера и приведение его в правильный формат."""
-    if value is None:
+    if value is None or value.strip().lower() in ('string', '', 'null'):
         return None
+
     try:
         # Парсим номер и проверяем, возможно ли его существование
         phone_number = phonenumbers.parse(value, 'RU')
