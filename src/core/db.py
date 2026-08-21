@@ -1,5 +1,4 @@
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncIterator
 
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,20 +11,20 @@ async_engine = create_async_engine(
     pool_pre_ping=True,
 )
 
-session_maker = async_sessionmaker(
+session_maker: async_sessionmaker[AsyncSession] = async_sessionmaker(
     bind=async_engine,
     expire_on_commit=False,
 )
 
 
-@asynccontextmanager
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    """Контекстный менеджер для получения сессии БД (для FastAPI Depends)."""
+async def get_session() -> AsyncIterator[AsyncSession]:
+    """Получение асинхронной сессии для FastAPI Depends."""
     async with session_maker() as session:
         try:
             yield session
             await session.commit()
         except SQLAlchemyError:
             await session.rollback()
-            raise HTTPException(status_code=500,
-                                detail="Ошибка при работе с БД")
+            raise HTTPException(status_code=500, detail='Ошибка при работе с БД')
+        finally:
+            await session.close()

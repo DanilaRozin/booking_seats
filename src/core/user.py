@@ -149,7 +149,38 @@ def require_role(*allowed_roles: RoleEnum) -> Callable[[User], Coroutine[Any, An
 
 fastapi_users = FastAPIUsers[User, int](get_user_manager, [auth_backend])
 
+# Пользователь
 current_user = fastapi_users.current_user(active=True)
+
+
+# Менеджер
+async def current_manager(
+    cafe_id: int | None = None,
+    user: User = Depends(require_role(RoleEnum.MANAGER, RoleEnum.ADMIN)),
+) -> User:
+    """Проверка является ли юзер менеджером.
+
+    В случае если в ендпоинте есть {cafe_id},
+    которое потом используется в функции как cafe_id: int,
+
+    Данная функция будет проверять является ли юзер менеджером кафе с cafe_id.
+    Если такой переменной нет, то функция будет проверять наличие роли MANAGER у юзера.
+
+    В случае если пользователь имеет роль ADMIN или является superuser
+    - проверка будет пройдена всегда.
+    """
+    if user.is_superuser or user.role == RoleEnum.ADMIN or cafe_id is None:
+        return user
+    if user.managed_cafe_id != cafe_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Вы не являетесь менеджером данного кафе.',
+        )
+    return user
+
+
+# Администратор
 current_admin = require_role(RoleEnum.ADMIN)
-current_manager = require_role(RoleEnum.MANAGER, RoleEnum.ADMIN)
+
+# Суперюзер
 current_superuser = fastapi_users.current_user(active=True, superuser=True)
