@@ -72,15 +72,6 @@ if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=8000)
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    """Возращает ошибки в формате {"message":...}."""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={'message': exc.detail},
-    )
-
-
 app.include_router(main_router)
 
 if __name__ == '__main__':
