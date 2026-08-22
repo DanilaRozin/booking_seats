@@ -10,7 +10,7 @@ from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
 
-from core.user import UserManager, current_manager, current_user, get_user_manager
+from core.user import UserManager, current_manager, current_user, ensure_can_deactivate, get_user_manager
 
 router = APIRouter()
 
@@ -110,7 +110,6 @@ async def get_user_info_by_id(
 
 @router.patch(
     '/{user_id}',
-    dependencies=[Depends(current_manager)],
     response_model=UserInfo,
     response_model_exclude_none=True,
 )
@@ -118,9 +117,10 @@ async def update_user_info(
     obj_in: UserAdminUpdate,
     user_id: int,
     request: Request,
+    user: User = Depends(current_manager),
     user_manager: UserManager = Depends(get_user_manager),
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
+    ensure_can_deactivate(obj_in, user)
     user_obj = await user_manager.get(user_id)
-
     return await user_manager.update(obj_in, user_obj, request=request)
