@@ -53,9 +53,6 @@ class CafeManagersInfo(UserBase):
 class CafeInfo(BaseSchema, CafeShortInfo):
     """Схема для работы кафе с БД."""
 
-    is_active: bool = Field()
-    created_at: datetime = Field()
-    updated_at: datetime | None
     managers: list[CafeManagersInfo] = Field(description='Менеджеры кафе')
 
 
