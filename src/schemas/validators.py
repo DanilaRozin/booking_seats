@@ -10,8 +10,9 @@ PHONE_PATTERN = r'(?:7|8)\d{10}$'
 
 def validate_phone_number(value: str | None) -> str | None:
     """Валидация введеного номера и приведение его в правильный формат."""
-    if value is None:
+    if value is None or value.strip().lower() in ('string', '', 'null'):
         return None
+
     digits = re.sub(r'\D', '', value)
     if not re.match(PHONE_PATTERN, digits):
         raise HTTPException(

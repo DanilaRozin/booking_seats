@@ -1,8 +1,50 @@
-from sqlalchemy import update
+from collections.abc import Sequence
+from typing import Any, Optional
+
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from crud.base import CRUDBase
-from models import Cafe
+from models import Cafe, User
+from schemas.cafe import CafeBase
+
+
+class CRUDCafe(CRUDBase):
+    """Класс работы с кафе."""
+
+    async def get_multi(self, session: AsyncSession) -> Sequence[Any]:
+        """Возвращает все объекты ."""
+        db_objs = select(self.model).options(selectinload(self.model.managers))
+        db_cafes = await session.execute(db_objs)
+        return db_cafes.scalars().all()
+
+    async def get_cafe_id_by_name(
+        self,
+        cafe_name: str,
+        session: AsyncSession,
+    ) -> Optional[int]:
+        """Метод возвращает id кафе по названию."""
+        db_cafe_id = await session.execute(
+            select(Cafe.id).where(
+                Cafe.name == cafe_name,
+            ),
+        )
+        return db_cafe_id.scalars().first()
+
+    async def create(
+        self,
+        obj_in: CafeBase,
+        session: AsyncSession,
+        user: User = None,
+    ) -> Cafe:
+        """Метод создает кафе без привязки менеджеров."""
+        db_obj = self.model(**obj_in.model_dump())
+        db_obj.managers = []
+        session.add(db_obj)
+        await session.commit()
+        await session.flush()
+        return db_obj
 
 
 class CRUDCTable(CRUDBase[Cafe]):
@@ -31,4 +73,5 @@ class CRUDCTable(CRUDBase[Cafe]):
         return result.scalars().first()
 
 
-cafe_crud = CRUDCTable(Cafe)
+cafe_crud = CRUDCafe(Cafe)
+table_crud = CRUDCTable(Cafe)
