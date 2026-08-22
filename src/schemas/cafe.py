@@ -52,22 +52,40 @@ class CafeManagersInfo(UserBase):
 class CafeInfo(CafeShortInfo):
     """Схема для работы кафе с БД."""
 
-    is_active: bool = Field()  # delete?
-    created_at: datetime = Field()  # delete?
-    updated_at: datetime | None  # delete?
+    is_active: bool = Field()
+    created_at: datetime = Field()
+    updated_at: datetime | None
     managers: list[CafeManagersInfo] = Field(description='Менеджеры кафе')
 
 
-class CafeUpdate(CafeCreate):
+class CafeUpdate(BaseModel):
     """Схема редактирования кафе."""
 
-    name: str | None = Field(default=None)
-    address: str | None = Field(default=None)
-    phone: str | None = Field(default=None)
+    name: str | None = Field(
+        default=None,
+        description='Новое название кафе',
+    )
+    address: str | None = Field(
+        default=None,
+        description='Новый адрес кафе',
+    )
+    phone: str | None = Field(
+        default=None,
+        description='Новый номер телефона кафе',
+    )
+    description: str | None = Field(
+        default=None,
+        description='Новое описание кафе',
+    )
+    photo_id: UUID | None = Field(
+        default=None,
+        description='Уникальный идентификатор нового изображения кафе',
+    )
     managers_id: list[int] | None = Field(
         default=None,
-        description='Новый список менеджеров проекта',
+        description='Новый список менеджеров кафе',
     )
-    is_active: bool = Field(default=True)
-
-    # model_config = ConfigDict(from_attributes=True) - это есть в базовой схеме
+    is_active: bool | None = Field(
+        default=None,
+        description='Новое состояние кафе',
+    )

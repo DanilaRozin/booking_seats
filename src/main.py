@@ -27,8 +27,6 @@ app = FastAPI(
     openapi_tags=tags.tag_list,
 )
 
-app.include_router(main_router)
-
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(

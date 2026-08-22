@@ -15,7 +15,6 @@ from schemas.cafe import (
     CafeBase,
     CafeCreate,
     CafeInfo,
-    CafeShortInfo,
     CafeUpdate,
 )
 
@@ -61,7 +60,7 @@ async def create_new_cafe(
 
 @router.get(
     '/',
-    response_model=list[CafeShortInfo],
+    response_model=list[CafeInfo],
     dependencies=[Depends(current_user)],
 )
 async def get_all_cafe(
@@ -100,7 +99,7 @@ async def get_cafe_by_id(
 
 @router.patch(
     '/{cafe_id}',
-    response_model=CafeBase,
+    response_model=CafeInfo,
     response_model_exclude_none=True,
     dependencies=[Depends(current_manager)],
 )
@@ -121,13 +120,15 @@ async def partial_update_cafe(
         session,
     )
 
-    # attached_managers = await update_cafe_managers_service(
-    #     cafe_id=db_cafe.id,
-    #     session=session,
-    #     managers_id=obj_in.managers_id,
-    # )
+    db_cafe = await add_managers_to_cafe_by_id(db_cafe, session)
 
-    # db_cafe.managers = attached_managers
+    if obj_in.managers_id is not None:
+        attached_managers = await update_cafe_managers_service(
+            cafe_id=db_cafe.id,
+            session=session,
+            managers_id=obj_in.managers_id,
+        )
+        db_cafe.managers = attached_managers
 
     await session.commit()
     return db_cafe
