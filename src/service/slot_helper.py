@@ -2,10 +2,11 @@ from fastapi import HTTPException, status
 from sqlalchemy import ColumnElement
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.constants import RoleEnum
-from src.crud.time_slots import slot_crud
-from src.models import Slot
-from src.schemas.user import UserInfo
+from crud.slots import slot_crud
+from models import Slot
+from schemas.user import UserInfo
+
+from core.constants import RoleEnum
 
 
 async def get_slot_for_user(
@@ -21,15 +22,15 @@ async def get_slot_for_user(
         conditions.append(Slot.is_active)
 
     slot = await slot_crud.get(
-        obj_id=slot_id,
-        session=session,
+        slot_id,
+        session,
         *conditions,
     )
 
     if slot is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Слот {slot_id} не найден для текущего контекста пользователя.',
+            detail=f'Слот {slot_id} не найден. Он не существует в кафе {cafe_id}.',
         )
     return slot
 

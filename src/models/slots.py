@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 from datetime import time
+from typing import TYPE_CHECKING
 
 from sqlalchemy import CheckConstraint, ForeignKey, String, Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.cafe import Cafe
-
 from core.base_model import Base
+
+if TYPE_CHECKING:
+    from cafe import Cafe
 
 
 class Slot(Base):
     """Модель временных слотов."""
+
+    __tablename__ = 'slots'
 
     cafe_id: Mapped[int] = mapped_column(ForeignKey('cafes.id', ondelete='RESTRICT'), nullable=False)
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
@@ -20,10 +24,10 @@ class Slot(Base):
         String(),
         nullable=True,
     )
-    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
-    cafe: Mapped[Cafe] = relationship(
+    cafe: Mapped['Cafe'] = relationship(
         back_populates='slots',
         lazy='selectin',
+        foreign_keys=[cafe_id],
     )
 
     __table_args__ = (

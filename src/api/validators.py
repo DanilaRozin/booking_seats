@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud import table_crud
-from crud.time_slots import slot_crud
+from crud.slots import slot_crud
 from models import Table
 from models.cafe import Cafe
 from schemas.user import UserCreate

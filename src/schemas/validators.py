@@ -1,8 +1,7 @@
 import re
-from typing import Any, Dict, Type
+from typing import Any, Dict
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, model_validator
 
 from core.constants import NAME_MAX_LENGTH, NAME_MIN_LENGTH
 
@@ -43,15 +42,16 @@ def validate_username(value: str) -> str:
 # -------------------------------------------------------------------------------------
 
 
-def check_start_and_end_time(cls: Type[BaseModel], data: Dict[str, Any]) -> Dict[str, Any]:
+def check_start_and_end_time(data: Dict[str, Any]) -> Dict[str, Any]:
     """Валидация полей start_time и end_time."""
     start_time = data.get('start_time')
     end_time = data.get('end_time')
-    if start_time is not None and end_time is not None:
-        if end_time <= start_time:
-            raise ValueError('Поле "start_time должно быть строго меньше поля "end_time"')
+    if start_time is None or end_time is None:
+        return data
+    if end_time <= start_time:
+        raise ValueError('end_time должен быть строго больше start_time')
+
     return data
 
 
-check_start_and_end_time = model_validator(mode='after')(check_start_and_end_time)
 # //////////////////////////////////////////////////////////////////////////////////////

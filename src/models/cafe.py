@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import SmallInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.time_slots import Slot
-
 from core.base_model import Base
+
+if TYPE_CHECKING:
+    from slots import Slot
 
 
 class Cafe(Base):
@@ -15,8 +18,8 @@ class Cafe(Base):
         SmallInteger,
         default=0,
     )
-    slots: Mapped[list[Slot]] = relationship(
-        back_populates='cafe"',
+    slots: Mapped[list['Slot']] = relationship(
+        back_populates='cafe',
         lazy='selectin',
         cascade='all, delete-orphan',
     )

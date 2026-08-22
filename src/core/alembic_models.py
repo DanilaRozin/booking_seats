@@ -1,6 +1,7 @@
-from src.core.base_model import Base
-from src.models import *  # noqa: F403
-from src.models import __all__ as models_names
+from models import *  # noqa: F403
+from models import __all__ as models_names
+
+from core.base_model import Base
 
 __all__ = [
     'Base',

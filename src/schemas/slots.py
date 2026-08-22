@@ -1,7 +1,9 @@
-from datetime import datetime, time
+from datetime import time
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, model_validator
 
+from schemas.base_schema import BaseSchema
+from schemas.cafe import CafeInfo
 from schemas.validators import check_start_and_end_time
 
 
@@ -10,11 +12,15 @@ class BaseSchemasSlots(BaseModel):
 
     start_time: time
     end_time: time
-    description: str = Field(...)
+    description: str
 
     model_config = ConfigDict(from_attributes=True)
 
-    validate_time_range = check_start_and_end_time
+    @model_validator(mode='before')
+    @classmethod
+    def check_time_logic(cls, data: dict) -> dict:
+        """Валидация."""
+        return check_start_and_end_time(data)
 
 
 class CreateTimeSlot(BaseSchemasSlots):
@@ -30,9 +36,7 @@ class UpdateTimeSlot(BaseSchemasSlots):
     is_active: bool | None = None
 
 
-class FullTimeSlot(UpdateTimeSlot):
+class FullTimeSlot(BaseSchema):
     """Pydantic - схема полного представления временных слотов."""
 
-    # cafe: <Pydantic-Схема Кафе.>
-    created_at: datetime
-    updated_at: datetime | None
+    cafe: CafeInfo

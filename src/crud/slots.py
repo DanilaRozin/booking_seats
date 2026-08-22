@@ -1,5 +1,5 @@
 from crud.base import CRUDBase
-from models.time_slots import Slot
+from models.slots import Slot
 
 
 class SlotCRUD(CRUDBase):

@@ -17,6 +17,12 @@ cafes.include_router(
     tags=[tags.add_tag('Столы', 'Управление столами в кафе')],
 )
 
+cafes.include_router(
+    slot_router,
+    prefix='/{cafe_id}/slots',
+    tags=[tags.add_tag('Временные слоты', 'Управления временными слотами')],
+)
+
 main_router = APIRouter()
 main_router.include_router(cafes)
 main_router.include_router(
@@ -28,9 +34,4 @@ main_router.include_router(
     user_router,
     prefix='/users',
     tags=[tags.add_tag('Пользователи', 'Управление пользователями')],
-)
-main_router.include_router(
-    slot_router,
-    prefix='/cafes/{cafe_id}/slots',
-    tags=[tags.add_tag('Временные слоты', 'Управления временными слотами')],
 )

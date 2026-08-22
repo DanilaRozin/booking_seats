@@ -1,6 +1,6 @@
 from models.cafe import Cafe
+from models.slots import Slot
 from models.table import Table
-from models.time_slots import Slot
 from models.user import User
 
 __all__ = [
