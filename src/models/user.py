@@ -9,6 +9,8 @@ from core.constants import NAME_MAX_LENGTH, RoleEnum
 class User(SQLAlchemyBaseUserTable[int], Base):
     """Модель пользователя."""
 
+    __tablename__ = 'users'
+
     username: Mapped[str] = mapped_column(String(NAME_MAX_LENGTH), nullable=False)
     phone: Mapped[str] = mapped_column(String(), nullable=False, index=True)
     tg_id: Mapped[str] = mapped_column(String(), nullable=True)

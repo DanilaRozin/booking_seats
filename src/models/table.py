@@ -8,14 +8,16 @@ from core.constants import TABLE_DESC_LENGTH
 class Table(Base):
     """Модель столов в кафе."""
 
+    __tablename__ = 'tables'
+
     cafe_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey('cafes.id'),
         primary_key=True,
     )
-    seat_count: Mapped[int] = mapped_column(
+    seat_number: Mapped[int] = mapped_column(
         SmallInteger,
-        CheckConstraint('seat_count >= 1'),
+        CheckConstraint('seat_number >= 1'),
     )
     description: Mapped[str | None] = mapped_column(
         String(TABLE_DESC_LENGTH),

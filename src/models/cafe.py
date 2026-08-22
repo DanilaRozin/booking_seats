@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 class Cafe(Base):
     """Модель Кафе."""
 
+    __tablename__ = 'cafes'
+
     last_table_number: Mapped[int] = mapped_column(
         SmallInteger,
         default=0,

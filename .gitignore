@@ -10,3 +10,7 @@ wheels/
 .venv
 .env
 .vscode/settings.json
+venv/
+
+# Log files
+logs/
