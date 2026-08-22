@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from api.endpoints import auth_router, cafe_router, table_router, user_router
+from api.endpoints.media import router as media_router
 from service.openapi_tags import OpenAPITags
 
 tags = OpenAPITags()
@@ -18,12 +19,20 @@ cafes.include_router(
 )
 
 main_router = APIRouter()
+main_router.include_router(media_router, prefix='/media', tags=['Media'])
 main_router.include_router(cafes)
 main_router.include_router(
     auth_router,
     prefix='/auth',
     tags=[tags.add_tag('Аутентификация', 'Получение данных для последующей авторизации')],
 )
+
+main_router.include_router(
+    media_router,
+    prefix='/media',
+    tags=[tags.add_tag('Медиа', 'Загрузка и получение медиафайлов')],
+)
+
 main_router.include_router(
     user_router,
     prefix='/users',

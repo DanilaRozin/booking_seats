@@ -13,3 +13,8 @@ venv/
 
 # Log files
 logs/
+uploads/
+*.jpg
+*.jpeg
+*.png
+*.webp

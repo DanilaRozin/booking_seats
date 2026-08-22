@@ -1,8 +1,3 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -31,8 +26,6 @@ app = FastAPI(
     description=settings.description,
     openapi_tags=tags.tag_list,
 )
-
-app.include_router(media_router, prefix="/api/v1")
 
 
 @app.exception_handler(HTTPException)
