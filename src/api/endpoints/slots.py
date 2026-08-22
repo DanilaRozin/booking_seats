@@ -10,7 +10,7 @@ from models.user import User
 from schemas.slots import CreateTimeSlot, FullTimeSlot, UpdateTimeSlot
 from service.slot_helper import get_slot_filters_for_user, get_slot_for_user
 
-from core.user import current_user
+from core.user import current_user, get_user_manager
 
 router = APIRouter()
 
@@ -68,7 +68,7 @@ async def get_slot_from_id(
     '',
     response_model=FullTimeSlot,
     status_code=status.HTTP_201_CREATED,
-    # dependencies=[Depends(current_user)],
+    dependencies=[Depends(get_user_manager)],
 )
 async def create_slot(
     cafe_id: Annotated[int, Path(description='ID кафе')],
@@ -92,7 +92,7 @@ async def create_slot(
 @router.patch(
     '/{slot_id}',
     response_model=FullTimeSlot,
-    # dependencies=[Depends(current_user)],
+    dependencies=[Depends(get_user_manager)],
 )
 async def update_slot(
     slot_id: Annotated[int, Path(description='ID слота')],
