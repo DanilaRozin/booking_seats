@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from schemas.base_schema import BaseSchema
 from schemas.user import UserBase
 
 
@@ -49,7 +50,7 @@ class CafeManagersInfo(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CafeInfo(CafeShortInfo):
+class CafeInfo(BaseSchema, CafeShortInfo):
     """Схема для работы кафе с БД."""
 
     is_active: bool = Field()

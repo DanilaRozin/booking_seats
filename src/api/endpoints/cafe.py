@@ -18,6 +18,7 @@ from schemas.cafe import (
     CafeUpdate,
 )
 
+from core.constants import RoleEnum
 from core.db import get_session
 from core.user import current_manager, current_superuser, current_user
 
@@ -61,19 +62,21 @@ async def create_new_cafe(
 @router.get(
     '/',
     response_model=list[CafeInfo],
-    dependencies=[Depends(current_user)],
 )
 async def get_all_cafe(
     session: SessionDep,
+    user: Optional[User] = Depends(current_user),
+    show_active: bool | None = None,
 ) -> list[Cafe]:
     """Получить список кафе. Только для зарегистрированных пользователей."""
+    if user.role == RoleEnum.USER or (user.role == RoleEnum.MANAGER and show_active is None):
+        show_active = True
     return await cafe_crud.get_multi(session)
 
 
 @router.get(
     '/{cafe_id}',
     response_model=CafeInfo,
-    dependencies=[Depends(current_user)],
 )
 async def get_cafe_by_id(
     cafe_id: int,
