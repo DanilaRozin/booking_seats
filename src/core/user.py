@@ -183,7 +183,7 @@ async def current_manager(
     """
     if user.is_superuser or user.role == RoleEnum.ADMIN or cafe_id is None:
         return user
-    if user.managed_cafe_id != cafe_id:
+    if user.cafe_id != cafe_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Вы не являетесь менеджером данного кафе.',
