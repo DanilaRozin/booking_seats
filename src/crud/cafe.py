@@ -10,7 +10,7 @@ from models import Cafe, User
 from schemas.cafe import CafeBase
 
 
-class CRUDCafe(CRUDBase):
+class CRUDCafe(CRUDBase[Cafe]):
     """Класс для CRUD-операций c ORM-моделью кафе."""
 
     async def get_multi(self, session: AsyncSession) -> Sequence[Any]:
