@@ -3,7 +3,7 @@ from datetime import time
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from schemas.base_schema import BaseSchema
-from schemas.cafe import CafeInfo
+from schemas.cafe import CafeShortInfo
 from schemas.validators import check_start_and_end_time
 
 
@@ -44,6 +44,6 @@ class FullTimeSlot(BaseSchema, BaseSchemasData):
     """Pydantic - схема полного представления временных слотов."""
 
     id: int
-    cafe: CafeInfo | None = None
+    cafe: CafeShortInfo | None = None
 
     model_config = ConfigDict(from_attributes=True)

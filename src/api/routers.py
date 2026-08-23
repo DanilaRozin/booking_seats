@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from api.endpoints import auth_router, cafe_router, slot_router, table_router, user_router
-from service.openapi_tags import OpenAPITags
+from services.openapi_tags import OpenAPITags
 
 tags = OpenAPITags()
 
