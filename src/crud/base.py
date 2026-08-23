@@ -90,29 +90,11 @@ class CRUDBase(Generic[ModelT]):
         await session.commit()
         return db_obj
 
-    async def create(
-        self,
-        obj_in: object,
-        session: AsyncSession,
-        # user: Optional[User] = None,
-    ) -> object:
-        """Универсальный метод записи в БД."""
-        obj_in_data = obj_in.model_dump()
-        # if user is not None:
-        #     obj_in_data['user_id'] = user.id
-        db_obj = self.model(**obj_in_data)
-        session.add(db_obj)
-        await session.commit()
-        await session.refresh(db_obj)
-        return db_obj
-
     async def update(
         self,
         db_obj: ModelT,
         obj_in: BaseModel,
         session: AsyncSession,
-        # ) -> Any:
-        # """Универсальный метод обновления объекта в БД."""
     ) -> ModelT:
         """Обновляет объект модели.
 
@@ -126,7 +108,6 @@ class CRUDBase(Generic[ModelT]):
 
         """
         update_data = obj_in.model_dump(exclude_unset=True)
-
         for field, value in update_data.items():
             if field in update_data:
                 setattr(db_obj, field, value)

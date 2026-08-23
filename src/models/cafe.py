@@ -1,19 +1,14 @@
 import uuid
+from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Uuid
+from sqlalchemy import SmallInteger, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from models.table import Table
-from models.user import User
 
 from core.base_model import Base
 
-__all__ = [
-    'Base',
-    'Cafe',
-    'Table',
-    'User',
-]
+if TYPE_CHECKING:
+    from models.table import Table
+    from models.user import User
 
 
 class Cafe(Base):
@@ -38,12 +33,12 @@ class Cafe(Base):
     )
     description: Mapped[str] = mapped_column(String)
     photo_id: Mapped[uuid.UUID] = mapped_column(Uuid, default=uuid.uuid4)
-    managers: Mapped[list['User']] = relationship(  # noqa # type: ignore
+    managers: Mapped[list['User']] = relationship(
         'User',
         back_populates='managed_cafe_id',
     )
-
-    # last_table_number: Mapped[int] = mapped_column(
-    #     SmallInteger,
-    #     default=0,
-    # )
+    tables: Mapped[list['Table']] = relationship(back_populates='cafe')
+    last_table_number: Mapped[int] = mapped_column(
+        SmallInteger,
+        default=0,
+    )
