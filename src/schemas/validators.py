@@ -44,8 +44,10 @@ def check_start_and_end_time(data: Dict[str, Any]) -> Dict[str, Any]:
     """Валидация полей start_time и end_time."""
     start_time = data.get('start_time')
     end_time = data.get('end_time')
+
     if start_time is None or end_time is None:
-        return data
+        raise ValueError('Поля start_time и end_time обязательны для создания слота')
+
     if end_time <= start_time:
         raise ValueError('end_time должен быть строго больше start_time')
 

@@ -7,14 +7,16 @@ from schemas.cafe import CafeInfo
 from schemas.validators import check_start_and_end_time
 
 
-class BaseSchemasSlots(BaseModel):
+class BaseSchemasData(BaseModel):
     """Базовая модель Pydantic-схемы для Временных слотов."""
 
     start_time: time
     end_time: time
     description: str
 
-    model_config = ConfigDict(from_attributes=True)
+
+class CreateTimeSlot(BaseSchemasData):
+    """Pydantic - Схема создания временного слота."""
 
     @model_validator(mode='before')
     @classmethod
@@ -23,11 +25,7 @@ class BaseSchemasSlots(BaseModel):
         return check_start_and_end_time(data)
 
 
-class CreateTimeSlot(BaseSchemasSlots):
-    """Pydantic - Схема создания временного слота."""
-
-
-class UpdateTimeSlot(BaseSchemasSlots):
+class UpdateTimeSlot(BaseSchemasData):
     """Pydantic-Схема обновления временного слота."""
 
     start_time: time | None = None
@@ -35,8 +33,17 @@ class UpdateTimeSlot(BaseSchemasSlots):
     description: str | None = None
     is_active: bool | None = None
 
+    @model_validator(mode='before')
+    @classmethod
+    def check_time_logic(cls, data: dict) -> dict:
+        """Валидация."""
+        return check_start_and_end_time(data)
 
-class FullTimeSlot(BaseSchema):
+
+class FullTimeSlot(BaseSchema, BaseSchemasData):
     """Pydantic - схема полного представления временных слотов."""
 
-    cafe: CafeInfo
+    id: int
+    cafe: CafeInfo | None = None
+
+    model_config = ConfigDict(from_attributes=True)

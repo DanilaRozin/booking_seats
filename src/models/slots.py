@@ -27,7 +27,6 @@ class Slot(Base):
     cafe: Mapped['Cafe'] = relationship(
         back_populates='slots',
         lazy='selectin',
-        foreign_keys=[cafe_id],
     )
 
     __table_args__ = (

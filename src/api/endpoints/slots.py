@@ -3,7 +3,7 @@ from typing import Annotated, List
 from fastapi import APIRouter, Depends, Path, status
 
 from api import SessionDep
-from api.validators import check_cafes_exists
+from api.validators import check_cafe_exists
 from crud.slots import slot_crud
 from models.slots import Slot
 from models.user import User
@@ -29,7 +29,7 @@ async def get_all_slots(
     * Для **администраторов** и **менеджеров** - все столы (с возможностью выбора),
     * для **пользователей** - только активные.
     """
-    await check_cafes_exists(cafe_id=cafe_id, session=session)
+    await check_cafe_exists(cafe_id=cafe_id, session=session)
 
     base_conditions = [Slot.cafe_id == cafe_id]
     role_conditions = get_slot_filters_for_user(user)
@@ -79,14 +79,13 @@ async def create_slot(
 
     *Только для администраторов и менеджеров.*
     """
-    await check_cafes_exists(cafe_id=cafe_id, session=session)
-    slot_data_dict = slot_in.model_dump()
-    slot_data_dict['cafe_id'] = cafe_id
-    final_slot_data = CreateTimeSlot(**slot_data_dict)
-    return await slot_crud.create(
-        db=session,
-        slot_data=final_slot_data,
+    cafe_obj = await check_cafe_exists(cafe_id, session)
+    new_slot = await slot_crud.create(
+        obj_in=slot_in,
+        session=session,
+        cafe_id=cafe_obj.id,
     )
+    return FullTimeSlot.model_validate(new_slot)
 
 
 @router.patch(
