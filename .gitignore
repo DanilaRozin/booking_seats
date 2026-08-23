@@ -13,5 +13,3 @@ venv/
 
 # Log files
 logs/
-
-.devcontainer/devcontainer.json
