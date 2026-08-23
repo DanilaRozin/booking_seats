@@ -1,8 +1,8 @@
-"""add cafe_id to users
+"""initial
 
-Revision ID: 96b8da58d188
+Revision ID: 27b39ff576f7
 Revises:
-Create Date: 2026-08-23 12:02:54.121627
+Create Date: 2026-08-23 14:32:02.326048
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '96b8da58d188'
+revision: str = '27b39ff576f7'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,6 +27,7 @@ def upgrade() -> None:
     sa.Column('phone', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=False),
     sa.Column('photo_id', sa.Uuid(), nullable=False),
+    sa.Column('last_table_number', sa.SmallInteger(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.BOOLEAN(), server_default='true', nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
