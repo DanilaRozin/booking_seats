@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.table import Table
-from models.user import User
+from models.user import User, relationship
 
 from core.base_model import Base
 
@@ -14,6 +17,9 @@ __all__ = [
     'Table',
     'User',
 ]
+
+if TYPE_CHECKING:
+    from slots import Slot
 
 
 class Cafe(Base):
@@ -47,3 +53,8 @@ class Cafe(Base):
     #     SmallInteger,
     #     default=0,
     # )
+    slots: Mapped[list['Slot']] = relationship(
+        back_populates='cafe',
+        lazy='selectin',
+        cascade='all, delete-orphan',
+    )

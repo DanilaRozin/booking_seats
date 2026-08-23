@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+.vscode/settings.json
 venv/
 
 # Log files
