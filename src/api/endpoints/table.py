@@ -94,7 +94,7 @@ async def create_table(
 
     """
     await check_cafe_exists(cafe_id, session)
-    table_number = cafe_crud.get_new_table_number(cafe_id, session)
+    table_number = await cafe_crud.get_new_table_number(cafe_id, session)
 
     return await table_crud.create(
         table_schema,
