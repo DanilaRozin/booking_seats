@@ -8,7 +8,7 @@ from api.services.cafe import (
     add_managers_to_cafe_by_id,
     update_cafe_managers_service,
 )
-from api.validators import check_cafe_exists, check_name_duplicate
+from api.validators import check_name_duplicate, check_object_exists
 from crud.cafe import cafe_crud
 from models import Cafe, User
 from schemas.cafe import (
@@ -112,7 +112,7 @@ async def partial_update_cafe(
     session: SessionDep,
 ) -> Cafe:
     """Редактировать кафе."""
-    db_cafe = await check_cafe_exists(cafe_id, session)
+    db_cafe = await check_object_exists(cafe_crud, cafe_id, session)
 
     if obj_in.name is not None:
         await check_name_duplicate(obj_in.name, session)

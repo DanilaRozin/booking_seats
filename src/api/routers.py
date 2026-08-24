@@ -5,7 +5,7 @@ from services.openapi_tags import OpenAPITags
 
 tags = OpenAPITags()
 
-# Сборка роутера Кафе и вложенного роутера Столов.
+# Сборка роутера Кафе и вложенных роутеров.
 cafes = APIRouter(prefix='/cafes')
 cafes.include_router(
     cafe_router,
