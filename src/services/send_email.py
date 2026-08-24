@@ -11,7 +11,7 @@ from core.settings import settings
 TEMPLATES_DIR = Path(__file__).parent / 'templates'
 
 
-async def send_email(to: str, subject: str, body: str) -> None:
+async def send_email(to: str, subject: str, body_text: str, body_html: str) -> None:
     """Отправляет письмо через SMTP.
 
     Принимает параметры:
@@ -26,8 +26,8 @@ async def send_email(to: str, subject: str, body: str) -> None:
     message['Date'] = formatdate(localtime=True)
     message['Message-ID'] = make_msgid()
 
-    message.set_content('Ваш почтовый клиент не поддерживает HTML-письма.')
-    message.add_alternative(body, subtype='html')
+    message.set_content(body_text)
+    message.add_alternative(body_html, subtype='html')
 
     await aiosmtplib.send(
         message,
@@ -42,9 +42,11 @@ async def send_email(to: str, subject: str, body: str) -> None:
 async def email_registration(user: UserCreate) -> None:
     """Функция отпарвки письма о регистрации."""
     html = (TEMPLATES_DIR / 'registration.html').read_text(encoding='utf-8')
-    body = html.format(text=f'Пользователь {user.username} зарегистрирован!')
+    body_text = f'Пользователь {user.username} зарегистрирован!'
+    body_html = html.format(text=body_text)
     await send_email(
         to=user.email,
         subject='Регистрация пользователя',
-        body=body,
+        body_text=body_text,
+        body_html=body_html,
     )
