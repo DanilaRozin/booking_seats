@@ -10,8 +10,8 @@ from models import Cafe, User
 from schemas.cafe import CafeBase
 
 
-class CRUDCafe(CRUDBase):
-    """Класс работы с кафе."""
+class CRUDCafe(CRUDBase[Cafe]):
+    """Класс для CRUD-операций c ORM-моделью кафе."""
 
     async def get_multi(self, session: AsyncSession) -> Sequence[Any]:
         """Возвращает все объекты ."""
@@ -46,10 +46,6 @@ class CRUDCafe(CRUDBase):
         await session.flush()
         return db_obj
 
-
-class CRUDCTable(CRUDBase[Cafe]):
-    """Класс для CRUD-операций c ORM-моделью кафе."""
-
     @staticmethod
     async def get_new_table_number(
         cafe_id: int,
@@ -74,4 +70,3 @@ class CRUDCTable(CRUDBase[Cafe]):
 
 
 cafe_crud = CRUDCafe(Cafe)
-table_crud = CRUDCTable(Cafe)

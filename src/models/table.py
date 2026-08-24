@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import CheckConstraint, ForeignKey, Integer, SmallInteger, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.base_model import Base
 from core.constants import TABLE_DESC_LENGTH
+
+if TYPE_CHECKING:
+    from models.cafe import Cafe
 
 
 class Table(Base):
@@ -23,3 +28,4 @@ class Table(Base):
         String(TABLE_DESC_LENGTH),
         nullable=True,
     )
+    cafe: Mapped['Cafe'] = relationship(back_populates='tables')

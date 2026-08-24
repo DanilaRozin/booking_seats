@@ -95,8 +95,6 @@ class CRUDBase(Generic[ModelT]):
         db_obj: ModelT,
         obj_in: BaseModel,
         session: AsyncSession,
-        # ) -> Any:
-        # """Универсальный метод обновления объекта в БД."""
     ) -> ModelT:
         """Обновляет объект модели.
 
@@ -110,7 +108,6 @@ class CRUDBase(Generic[ModelT]):
 
         """
         update_data = obj_in.model_dump(exclude_unset=True)
-
         for field, value in update_data.items():
             if field in update_data:
                 setattr(db_obj, field, value)
