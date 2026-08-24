@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.base_model import Base
 
 if TYPE_CHECKING:
+    from models.slots import Slot
     from models.table import Table
     from models.user import User
 
@@ -37,8 +38,13 @@ class Cafe(Base):
         'User',
         back_populates='managed_cafe_id',
     )
-    tables: Mapped[list['Table']] = relationship(back_populates='cafe')
     last_table_number: Mapped[int] = mapped_column(
         SmallInteger,
         default=0,
+    )
+    tables: Mapped[list['Table']] = relationship(back_populates='cafe')
+    slots: Mapped[list['Slot']] = relationship(
+        back_populates='cafe',
+        lazy='selectin',
+        cascade='all, delete-orphan',
     )

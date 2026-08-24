@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from api.endpoints import auth_router, cafe_router, table_router, user_router
+from api.endpoints import auth_router, cafe_router, slot_router, table_router, user_router
 from services.openapi_tags import OpenAPITags
 
 tags = OpenAPITags()
@@ -15,6 +15,12 @@ cafes.include_router(
     table_router,
     prefix='/{cafe_id}/tables',
     tags=[tags.add_tag('Столы', 'Управление столами в кафе')],
+)
+
+cafes.include_router(
+    slot_router,
+    prefix='/{cafe_id}/slots',
+    tags=[tags.add_tag('Временные слоты', 'Управления временными слотами')],
 )
 
 main_router = APIRouter()
