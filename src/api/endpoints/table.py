@@ -100,6 +100,7 @@ async def create_table(
         table_schema,
         session,
         id=table_number,
+        cafe_id=cafe_id,
     )
 
 
