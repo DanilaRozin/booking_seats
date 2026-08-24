@@ -28,4 +28,7 @@ class Table(Base):
         String(TABLE_DESC_LENGTH),
         nullable=True,
     )
-    cafe: Mapped['Cafe'] = relationship(back_populates='tables')
+    cafe: Mapped['Cafe'] = relationship(
+        back_populates='tables',
+        lazy='selectin',
+    )
