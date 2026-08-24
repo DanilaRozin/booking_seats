@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -8,11 +7,18 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from core.base_model import Base
 
-ModelT = TypeVar('ModelT', bound=Base)
 
+class CRUDBase[
+    ModelT: Base,
+    CreateSchemaT: BaseModel,
+    UpdateSchemaT: BaseModel,
+]:
+    """Класс для CRUD-операций.
 
-class CRUDBase(Generic[ModelT]):
-    """Класс для CRUD-операций."""
+    Аргуметы типизации:
+        CRUDBase[DatabaseModel, CreateSchema, UpdateSchema]
+
+    """
 
     def __init__(self, model: type[ModelT]) -> None:
         """Инициализирует объект для выполнения CRUD-операций.
@@ -67,7 +73,7 @@ class CRUDBase(Generic[ModelT]):
 
     async def create(
         self,
-        obj_in: BaseModel,
+        obj_in: CreateSchemaT,
         session: AsyncSession,
         **additional_attrs: object,
     ) -> ModelT:
@@ -93,7 +99,7 @@ class CRUDBase(Generic[ModelT]):
     async def update(
         self,
         db_obj: ModelT,
-        obj_in: BaseModel,
+        obj_in: UpdateSchemaT,
         session: AsyncSession,
     ) -> ModelT:
         """Обновляет объект модели.

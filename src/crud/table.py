@@ -2,10 +2,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud.base import CRUDBase
 from models import Table
-from schemas.table import TableCreate
+from schemas.table import TableCreate, TableUpdate
 
 
-class CRUDCTable(CRUDBase[Table]):
+class CRUDCTable(CRUDBase[Table, TableCreate, TableUpdate]):
     """Класс для CRUD-операций c ORM-моделью cтолов."""
 
     async def create(
