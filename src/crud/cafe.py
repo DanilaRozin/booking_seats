@@ -8,10 +8,10 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from crud.base import CRUDBase
 from models import Cafe, User
-from schemas.cafe import CafeBase
+from schemas.cafe import CafeBase, CafeCreate, CafeUpdate
 
 
-class CRUDCafe(CRUDBase[Cafe]):
+class CRUDCafe(CRUDBase[Cafe, CafeCreate, CafeUpdate]):
     """Класс для CRUD-операций c ORM-моделью кафе."""
 
     async def get_multi(
