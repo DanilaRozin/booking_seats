@@ -18,6 +18,12 @@ cafes.include_router(
     tags=[tags.add_tag('Столы', 'Управление столами в кафе')],
 )
 
+cafes.include_router(
+    slot_router,
+    prefix='/{cafe_id}/slots',
+    tags=[tags.add_tag('Временные слоты', 'Управления временными слотами')],
+)
+
 main_router = APIRouter()
 main_router.include_router(media_router, prefix='/media', tags=['Media'])
 main_router.include_router(cafes)

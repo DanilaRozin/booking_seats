@@ -1,4 +1,5 @@
 import re
+from typing import Any, Dict
 
 from fastapi import HTTPException, status
 
@@ -10,8 +11,6 @@ PHONE_PATTERN = r'(?:7|8)\d{10}$'
 
 def validate_phone_number(value: str | None) -> str | None:
     """Валидация введеного номера и приведение его в правильный формат."""
-    if value is None:
-        return None
     digits = re.sub(r'\D', '', value)
     if not re.match(PHONE_PATTERN, digits):
         raise HTTPException(
@@ -32,3 +31,25 @@ def validate_username(value: str) -> str:
             ),
         )
     return value
+
+
+# -------------------------------------------------------------------------------------
+#                               TIME SLOTS
+# -------------------------------------------------------------------------------------
+
+
+def check_start_and_end_time(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Валидация полей start_time и end_time."""
+    start_time = data.get('start_time')
+    end_time = data.get('end_time')
+
+    if start_time is None or end_time is None:
+        raise ValueError('Поля start_time и end_time обязательны для создания слота')
+
+    if end_time <= start_time:
+        raise ValueError('end_time должен быть строго больше start_time')
+
+    return data
+
+
+# //////////////////////////////////////////////////////////////////////////////////////

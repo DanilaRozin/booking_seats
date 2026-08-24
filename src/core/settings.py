@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     postgres_db: str
     postgres_server: str
     postgres_port: int = 5432
+    smtp_from: str
+    smtp_port: int
+    smtp_host: str
+    smtp_password: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / '../infra/.env',

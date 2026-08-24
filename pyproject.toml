@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aiosmtplib>=5.1.2",
     "alembic>=1.18.4",
     "asyncpg>=0.31.0",
     "fastapi>=0.136.1",
@@ -32,3 +33,6 @@ extend-ignore = ["COM812"]
 
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = ["declared_attr", "sqlalchemy.orm.declared_attr"]
+
+[tool.mypy]
+disallow_any_generics = true

@@ -5,10 +5,13 @@ build/
 dist/
 wheels/
 *.egg-info
+.mypy_cache
+.ruff_cache
 
 # Virtual environments
 .venv
 .env
+.vscode/settings.json
 venv/
 
 # Log files
@@ -18,3 +21,9 @@ uploads/
 *.jpeg
 *.png
 *.webp
+
+# Папки, создаваемые средой разработки
+.idea
+.DS_Store
+.AppleDouble
+.LSOverride

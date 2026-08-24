@@ -3,7 +3,7 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
 from schemas.base_schema import BaseSchema
-from schemas.cafe import CafeInfo
+from schemas.cafe import CafeShortInfo
 
 from core.constants import TABLE_DESC_LENGTH
 
@@ -36,6 +36,6 @@ class TableInfo(TableBase, BaseSchema):
     """Схема представления из базы данных объетов модели "Столы"."""
 
     id: int
-    cafe: CafeInfo
+    cafe: CafeShortInfo
 
     model_config = ConfigDict(from_attributes=True)
