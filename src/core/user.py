@@ -17,7 +17,6 @@ from schemas.validators import validate_phone_number
 from .constants import PASSWORD_MIN_LEN, RoleEnum
 from .db import get_session
 from .settings import settings
-from .utils import is_email
 
 
 class UserDatabase(SQLAlchemyUserDatabase):
@@ -81,9 +80,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     async def authenticate(self, login: str, password: str) -> User | None:
         """Аутентифицирует пользователя по email или телефону."""
         user = (
-            await self.user_db.get_by_email(login)
-            if is_email(login)
-            else await self.user_db.get_by_phone(login)
+            await self.user_db.get_by_email(login) if '@' in login else await self.user_db.get_by_phone(login)
         )
 
         if user is None:

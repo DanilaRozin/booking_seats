@@ -53,7 +53,6 @@ async def register(
 @router.get(
     '',
     response_model=list[UserInfo],
-    response_model_exclude_none=True,
     dependencies=[Depends(current_manager)],
     summary='Посмотреть список всех пользователей',
 )
@@ -96,7 +95,6 @@ async def update_me_info(
 @router.get(
     '/{user_id}',
     response_model=UserInfo,
-    response_model_exclude_none=True,
     dependencies=[Depends(current_manager)],
 )
 async def get_user_info_by_id(
@@ -110,7 +108,6 @@ async def get_user_info_by_id(
 @router.patch(
     '/{user_id}',
     response_model=UserInfo,
-    response_model_exclude_none=True,
 )
 async def update_user_info(
     obj_in: UserAdminUpdate,

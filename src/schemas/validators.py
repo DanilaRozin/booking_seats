@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 
 from core.constants import NAME_MAX_LENGTH, NAME_MIN_LENGTH
 
-USERNAME_PATTERN = rf'^[A-Za-z0-9]{{{NAME_MIN_LENGTH},{NAME_MAX_LENGTH}}}+(?:[ _-][A-Za-z0-9]+)*$'
+USERNAME_PATTERN = rf'^[A-Za-z0-9]{{{NAME_MIN_LENGTH},{NAME_MAX_LENGTH}}}+(?:_[A-Za-z0-9]+)*$'
 PHONE_PATTERN = r'(?:7|8)\d{10}$'
 
 
