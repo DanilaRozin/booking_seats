@@ -1,41 +1,34 @@
 from fastapi import HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
-from crud import cafe_crud, table_crud
-from models import Table
+from crud import cafe_crud
+from crud.base import CRUDBase
 from schemas.user import UserCreate
 
+from core.base_model import Base
 from core.user import UserManager
 
 
-async def check_cafe_exists(
-    cafe_id: int,
+async def check_object_exists[
+    ModelT: Base,
+    CreateSchemaT: BaseModel,
+    UpdateSchemaT: BaseModel,
+](
+    crud: CRUDBase[ModelT, CreateSchemaT, UpdateSchemaT],
+    obj_id: int,
     session: AsyncSession,
-) -> Table:
-    """Проверка существования кафе в БД."""
-    cafe = await cafe_crud.get(cafe_id, session)
-    if cafe is None:
+    *conditions: ColumnElement[bool],
+) -> ModelT:
+    """Проверка существования объекта в БД."""
+    obj = await crud.get(obj_id, session, *conditions)
+    if obj is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Кафе не существует!',
+            detail=f'Объект модели {crud.model.__name__} не найден.',
         )
-    return cafe
-
-
-async def check_table_exists(
-    cafe_id: int,
-    table_id: int,
-    session: AsyncSession,
-) -> Table:
-    """Проверка существования в БД стола в кафе."""
-    await check_cafe_exists(cafe_id, session)
-    table = await table_crud.get(table_id, session, Table.cafe_id == cafe_id)
-    if table is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Стола не существует!',
-        )
-    return table
+    return obj
 
 
 async def check_name_duplicate(
@@ -52,23 +45,6 @@ async def check_name_duplicate(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Кафе с таким названием уже существует',
         )
-
-
-async def check_cafe_exists(
-    cafe_id: int,
-    session: AsyncSession,
-) -> object:
-    """Проверка наличия кафе в базе."""
-    db_cafe = await cafe_crud.get(
-        cafe_id,
-        session,
-    )
-    if db_cafe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Кафе не найдено в базе',
-        )
-    return db_cafe
 
 
 async def existing_user(user_create: UserCreate, user_manager: UserManager) -> None:
