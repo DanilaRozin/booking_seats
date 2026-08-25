@@ -4,18 +4,23 @@ from typing import Any, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.elements import ColumnElement
 
 from crud.base import CRUDBase
 from models import Cafe, User
-from schemas.cafe import CafeBase
+from schemas.cafe import CafeBase, CafeCreate, CafeUpdate
 
 
-class CRUDCafe(CRUDBase):
-    """Класс работы с кафе."""
+class CRUDCafe(CRUDBase[Cafe, CafeCreate, CafeUpdate]):
+    """Класс для CRUD-операций c ORM-моделью кафе."""
 
-    async def get_multi(self, session: AsyncSession) -> Sequence[Any]:
+    async def get_multi(
+        self,
+        session: AsyncSession,
+        *conditions: ColumnElement[bool],
+    ) -> Sequence[Any]:
         """Возвращает все объекты ."""
-        db_objs = select(self.model).options(selectinload(self.model.managers))
+        db_objs = select(self.model).where(*conditions).options(selectinload(self.model.managers))
         db_cafes = await session.execute(db_objs)
         return db_cafes.scalars().all()
 
@@ -46,10 +51,6 @@ class CRUDCafe(CRUDBase):
         await session.flush()
         return db_obj
 
-
-class CRUDCTable(CRUDBase[Cafe]):
-    """Класс для CRUD-операций c ORM-моделью кафе."""
-
     @staticmethod
     async def get_new_table_number(
         cafe_id: int,
@@ -74,4 +75,3 @@ class CRUDCTable(CRUDBase[Cafe]):
 
 
 cafe_crud = CRUDCafe(Cafe)
-table_crud = CRUDCTable(Cafe)

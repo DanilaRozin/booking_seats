@@ -6,7 +6,7 @@ target-version = "py312"
 preview = true
 # Содержимое папки alembic-а в проверку не включаем
 exclude = [
-    "src/migrations/versions",
+    "src/migrations/**",
     ".venv"
 ]
 

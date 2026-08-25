@@ -4,10 +4,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
-from api.validators import check_cafe_exists, check_table_exists
+from api.validators import check_object_exists
 from crud import cafe_crud, table_crud
 from models import Table
 from schemas.table import TableCreate, TableInfo, TableUpdate
+from services.decorators import none_to_404
 
 from core.constants import RoleEnum
 from core.user import current_manager
@@ -21,7 +22,7 @@ router = APIRouter()
     response_model=list[TableInfo],
 )
 async def get_all_tables(
-    cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
+    cafe_id: Annotated[int, Path(description='ID кафе')],
     user: UserDep,
     session: SessionDep,
     show_active: Annotated[
@@ -41,7 +42,7 @@ async def get_all_tables(
     - для менеджера - активные столы в кафе
 
     """
-    await check_cafe_exists(cafe_id, session)
+    await check_object_exists(cafe_crud, cafe_id, session)
     if user.role == RoleEnum.MANAGER and show_active is None or user.role == RoleEnum.USER:
         show_active = True
     conditions = [Table.cafe_id == cafe_id]
@@ -59,9 +60,10 @@ async def get_all_tables(
     summary='Информация о столе в кафе по его ID',
     response_model=TableInfo,
 )
+@none_to_404
 async def get_table(
-    cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
-    table_id: Annotated[int, Path(description='ID стола', gt=0)],
+    cafe_id: Annotated[int, Path(description='ID кафе')],
+    table_id: Annotated[int, Path(description='ID стола')],
     user: UserDep,
     session: SessionDep,
 ) -> Table | None:
@@ -84,7 +86,7 @@ async def get_table(
     dependencies=[Depends(current_manager)],
 )
 async def create_table(
-    cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
+    cafe_id: Annotated[int, Path(description='ID кафе')],
     table_schema: TableCreate,
     session: SessionDep,
 ) -> Table:
@@ -93,13 +95,14 @@ async def create_table(
     Только для администраторов и менеджеров.
 
     """
-    await check_cafe_exists(cafe_id, session)
-    table_number = cafe_crud.get_new_table_number(cafe_id, session)
+    await check_object_exists(cafe_crud, cafe_id, session)
+    table_number = await cafe_crud.get_new_table_number(cafe_id, session)
 
     return await table_crud.create(
         table_schema,
         session,
         id=table_number,
+        cafe_id=cafe_id,
     )
 
 
@@ -110,8 +113,8 @@ async def create_table(
     dependencies=[Depends(current_manager)],
 )
 async def update_table(
-    cafe_id: Annotated[int, Path(description='ID кафе', gt=0)],
-    table_id: Annotated[int, Path(description='ID стола', gt=0)],
+    cafe_id: Annotated[int, Path(description='ID кафе')],
+    table_id: Annotated[int, Path(description='ID стола')],
     obj_in: TableUpdate,
     session: SessionDep,
 ) -> Table:
@@ -120,7 +123,13 @@ async def update_table(
     Только для администраторов и менеджеров.
 
     """
-    table = await check_table_exists(cafe_id, table_id, session)
+    await check_object_exists(cafe_crud, cafe_id, session)
+    table = await check_object_exists(
+        table_crud,
+        table_id,
+        session,
+        Table.cafe_id == cafe_id,
+    )
 
     return await table_crud.update(
         table,

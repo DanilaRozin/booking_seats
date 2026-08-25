@@ -1,14 +1,14 @@
 import traceback
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.services.cafe import (
     add_managers_to_cafe_by_id,
     update_cafe_managers_service,
 )
-from api.validators import check_cafe_exists, check_name_duplicate
+from api.validators import check_name_duplicate, check_object_exists
 from crud.cafe import cafe_crud
 from models import Cafe, User
 from schemas.cafe import (
@@ -20,23 +20,60 @@ from schemas.cafe import (
 
 from core.constants import RoleEnum
 from core.db import get_session
-from core.user import current_manager, current_superuser, current_user
+from core.user import current_admin, current_manager, current_user
 
 router = APIRouter()
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
+@router.get(
+    '/',
+    summary='Получение списка кафе',
+    response_model=list[CafeInfo],
+)
+async def get_all_cafe(
+    session: SessionDep,
+    user: Optional[User] = Depends(current_user),
+    show_active: Annotated[
+        bool | None,
+        Query(description='Фильтрация работает только для менеджеров и админа'),
+    ] = None,
+) -> list[Cafe]:
+    """Получение списка кафе.
+
+    Для администраторов и менеджеров - все кафе (с возможностью выбора),
+    для пользователей - только активные.
+    """
+    conditions = []
+
+    if user.role == RoleEnum.USER:
+        conditions.append(Cafe.is_active.is_(True))
+        show_active = True
+
+    if user.role in [RoleEnum.MANAGER, RoleEnum.ADMIN] and show_active is None:
+        pass
+
+    else:
+        conditions.append(Cafe.is_active.is_(show_active))
+
+    return await cafe_crud.get_multi(session, *conditions)
+
+
 @router.post(
     '/',
+    summary='Создание нового кафе',
     response_model=CafeInfo,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(current_superuser)],
+    dependencies=[Depends(current_admin)],
 )
 async def create_new_cafe(
     cafe_in: CafeCreate,
     session: SessionDep,
 ) -> Cafe:
-    """Создать кафе. Доступ только у суперадминистратора."""
+    """Создает новое кафе.
+
+    Только для администраторов.
+    """
     try:
         await check_name_duplicate(cafe_in.name, session)
         cafe_base_data = CafeBase(**cafe_in.model_dump())
@@ -60,22 +97,8 @@ async def create_new_cafe(
 
 
 @router.get(
-    '/',
-    response_model=list[CafeInfo],
-)
-async def get_all_cafe(
-    session: SessionDep,
-    user: Optional[User] = Depends(current_user),
-    show_active: bool | None = None,
-) -> list[Cafe]:
-    """Получить список кафе. Только для зарегистрированных пользователей."""
-    if user.role == RoleEnum.USER or (user.role == RoleEnum.MANAGER and show_active is None):
-        show_active = True
-    return await cafe_crud.get_multi(session)
-
-
-@router.get(
     '/{cafe_id}',
+    summary='Получение информации о кафе по его ID',
     response_model=CafeInfo,
 )
 async def get_cafe_by_id(
@@ -83,15 +106,21 @@ async def get_cafe_by_id(
     session: SessionDep,
     user: Optional[User] = Depends(current_user),
 ) -> Cafe:
-    """Получить информацию о кафе по ID."""
+    """Получение информации о кафе по его ID.
+
+    Для администраторов и менеджеров - все кафе,
+    для пользователей - только активные.
+    """
     db_cafe = await cafe_crud.get(cafe_id, session)
+
     if not db_cafe:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Кафе отсутствует в БД',
         )
+
     is_staff = user and user.role in ['ADMIN', 'MANAGER']
-    if not is_staff:  # and not db_cafe.is_active
+    if not is_staff and not db_cafe.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Доступно только для менеджера или админа',
@@ -102,6 +131,7 @@ async def get_cafe_by_id(
 
 @router.patch(
     '/{cafe_id}',
+    summary='Обновление информации о кафе по его ID',
     response_model=CafeInfo,
     response_model_exclude_none=True,
     dependencies=[Depends(current_manager)],
@@ -111,8 +141,11 @@ async def partial_update_cafe(
     obj_in: CafeUpdate,
     session: SessionDep,
 ) -> Cafe:
-    """Редактировать кафе."""
-    db_cafe = await check_cafe_exists(cafe_id, session)
+    """Обновление информации о кафе по его ID.
+
+    Только для администраторов и менеджеров.
+    """
+    db_cafe = await check_object_exists(cafe_crud, cafe_id, session)
 
     if obj_in.name is not None:
         await check_name_duplicate(obj_in.name, session)
