@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import cafe_crud, table_crud
+from crud import cafe_crud, dish_crud, table_crud
 from models import Table
 from schemas.user import UserCreate
 
@@ -89,3 +89,20 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Указанный username занят.',
         )
+
+
+async def check_dish_exists(
+    dish_id: int,
+    session: AsyncSession,
+) -> object:
+    """Проверка существования в БД блюда."""
+    db_dish = await dish_crud.get(
+            dish_id,
+            session,
+    )
+    if db_dish is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Блюдо не найдено в базе',
+        )
+    return db_dish
