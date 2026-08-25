@@ -1,18 +1,12 @@
 from fastapi import APIRouter
 
-from api.endpoints import (
-    auth_router,
-    cafe_router,
-    slot_router,
-    table_router,
-    user_router,
-)
+from api.endpoints import auth_router, cafe_router, slot_router, table_router, user_router
 from api.endpoints.media import router as media_router
 from services.openapi_tags import OpenAPITags
 
 tags = OpenAPITags()
 
-# Сборка роутера Кафе и вложенного роутера Столов.
+# Сборка роутера Кафе и вложенных роутеров.
 cafes = APIRouter(prefix='/cafes')
 cafes.include_router(
     cafe_router,
