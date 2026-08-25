@@ -71,10 +71,10 @@ async def get_table(
     активные.
 
     """
-    conditions = [Table.cafe_id == cafe_id]
-    if user.role == RoleEnum.USER:
-        conditions.append(Table.is_active.is_(True))
-    return await table_crud.get(table_id, session, *conditions)
+    table = await table_crud.get(table_id, session, Table.cafe_id == cafe_id)
+    if table and not table.is_active and user.role == RoleEnum.USER:
+        return None
+    return table
 
 
 @router.post(
