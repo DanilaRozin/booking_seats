@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image, UnidentifiedImageError
 from fastapi import HTTPException, UploadFile, status
 
-from src.core.constants import ALLOWED_CONTENT_TYPES, MAX_FILE_SIZE, UPLOAD_DIR
+from core.constants import ALLOWED_CONTENT_TYPES, MAX_FILE_SIZE, UPLOAD_DIR
 
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
