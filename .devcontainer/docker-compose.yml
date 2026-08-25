@@ -1,11 +1,50 @@
 name: booking_seats_dev
 
 services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    env_file:
+      - ../infra/.env
+    ports:
+      - 15672:15672  # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: redis-cli ping
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  flower:
+    image: mher/flower:2.0
+    command: celery flower --port=5555
+    env_file:
+      - ../infra/.env
+    ports:
+      - 5555:5555
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   app:
     build: .
     volumes:
       - ..:/workspace:cached
     command: sleep infinity
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   db:
     image: postgres:17-alpine
@@ -34,3 +73,4 @@ services:
 
 volumes:
   pgdata:
+  rabbitmq_data:
