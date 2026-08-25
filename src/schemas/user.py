@@ -71,3 +71,10 @@ class UserLogin(BaseModel):
 
     login: EmailStr | str
     password: SecretStr
+
+
+class TokenResponse(BaseModel):
+    """Схема JWT-токена авторизации."""
+
+    access_token: str
+    token_type: str
