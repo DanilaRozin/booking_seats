@@ -8,6 +8,7 @@ from api.validators import check_object_exists
 from crud import cafe_crud, table_crud
 from models import Table
 from schemas.table import TableCreate, TableInfo, TableUpdate
+from services.decorators import none_to_404
 
 from core.constants import RoleEnum
 from core.user import current_manager
@@ -59,6 +60,7 @@ async def get_all_tables(
     summary='Информация о столе в кафе по его ID',
     response_model=TableInfo,
 )
+@none_to_404
 async def get_table(
     cafe_id: Annotated[int, Path(description='ID кафе')],
     table_id: Annotated[int, Path(description='ID стола')],
@@ -71,10 +73,10 @@ async def get_table(
     активные.
 
     """
-    table = await table_crud.get(table_id, session, Table.cafe_id == cafe_id)
-    if table and not table.is_active and user.role == RoleEnum.USER:
-        return None
-    return table
+    conditions = [Table.cafe_id == cafe_id]
+    if user.role == RoleEnum.USER:
+        conditions.append(Table.is_active.is_(True))
+    return await table_crud.get(table_id, session, *conditions)
 
 
 @router.post(
