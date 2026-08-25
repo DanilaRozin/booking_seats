@@ -34,7 +34,7 @@ class UserInfo(UserBase):
 class UserCreate(UserBase, schemas.CreateUpdateDictModel):
     """Схема для регистрации."""
 
-    password: str
+    password: SecretStr
 
 
 class UserShortInfo(UserBase):
