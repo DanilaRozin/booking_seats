@@ -12,6 +12,7 @@ dependencies = [
     "fastapi-users[sqlalchemy]==13.0.0",
     "loguru>=0.7.3",
     "phonenumbers>=9.0.37",
+    "pillow>=12.3.0",
     "pydantic>=2.13.3",
     "pydantic-settings>=2.14.0",
     "sqlalchemy[asyncio]>=2.0.49",
