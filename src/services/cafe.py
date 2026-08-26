@@ -12,9 +12,6 @@ async def update_cafe_managers_service(
     managers_id: list[int] | None = None,
 ) -> list[User]:
     """Сервисный метод обновляет связь менеджеры-кафе."""
-    if not managers_id:
-        return []
-
     query = select(User).where(User.id.in_(managers_id))
     result_managers = await session.execute(query)
     found_managers = list(result_managers.scalars().all())

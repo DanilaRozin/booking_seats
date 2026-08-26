@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, Path, status
 
 from api import SessionDep
 from api.validators import check_object_exists
-from crud import cafe_crud
-from crud.slots import slot_crud
+from crud import cafe_crud, slot_crud
 from models.slots import Slot
 from models.user import User
 from schemas.slots import CreateTimeSlot, FullTimeSlot, UpdateTimeSlot
