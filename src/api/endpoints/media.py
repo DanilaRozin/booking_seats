@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from schemas.media import MediaResponse
 from services.media import MediaService
 
-router = APIRouter(prefix='/media', tags=['Media (Изображения)'])
+router = APIRouter()
 
 
 @router.post(

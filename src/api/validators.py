@@ -1,13 +1,19 @@
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
 from crud import cafe_crud
 from crud.base import CRUDBase
+from models import User
 from schemas.user import UserCreate
+from services.media import MediaService
 
 from core.base_model import Base
+from core.constants import RoleEnum
 from core.user import UserManager
 
 
@@ -65,3 +71,34 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Указанный username занят.',
         )
+
+
+def existing_image(photo_id: UUID) -> None:
+    """Проверка существует ли файл картинки."""
+    try:
+        MediaService.get_image_path(photo_id)
+    except HTTPException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Не найден файл изображения кафе.',
+        )
+
+
+async def validate_managers_id(
+    managers_id: list[int],
+    session: AsyncSession,
+) -> list[int]:
+    """Проверка на валидность списка менеджеров."""
+    stmt = select(User).where(
+        User.id.in_(managers_id),
+        User.role == RoleEnum.MANAGER,
+    )
+    result = await session.execute(stmt)
+    db_managers = result.scalars().all()
+    if len(db_managers) != len(managers_id):
+        bad_managers = set(managers_id) - set(user.id for user in db_managers)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f'Нельзя назначить менеджеров {list(bad_managers)}',
+        )
+    return list(db_managers)

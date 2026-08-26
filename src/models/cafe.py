@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import SmallInteger, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -32,8 +32,16 @@ class Cafe(Base):
         unique=True,
         nullable=False,
     )
-    description: Mapped[str] = mapped_column(String)
-    photo_id: Mapped[uuid.UUID] = mapped_column(Uuid, default=uuid.uuid4)
+    description: Mapped[Optional[str]] = mapped_column(
+        String,
+        nullable=True,
+        default=None,
+    )
+    photo_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid,
+        nullable=True,
+        default=None,
+    )
     managers: Mapped[list['User']] = relationship(
         'User',
         back_populates='managed_cafe_id',

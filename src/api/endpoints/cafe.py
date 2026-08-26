@@ -1,14 +1,14 @@
-import traceback
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.services.cafe import (
-    add_managers_to_cafe_by_id,
-    update_cafe_managers_service,
+from api.validators import (
+    check_name_duplicate,
+    check_object_exists,
+    existing_image,
+    validate_managers_id,
 )
-from api.validators import check_name_duplicate, check_object_exists
 from crud.cafe import cafe_crud
 from models import Cafe, User
 from schemas.cafe import (
@@ -16,6 +16,10 @@ from schemas.cafe import (
     CafeCreate,
     CafeInfo,
     CafeUpdate,
+)
+from services.cafe import (
+    add_managers_to_cafe_by_id,
+    update_cafe_managers_service,
 )
 
 from core.constants import RoleEnum
@@ -43,6 +47,7 @@ async def get_all_cafe(
 
     Для администраторов и менеджеров - все кафе (с возможностью выбора),
     для пользователей - только активные.
+
     """
     conditions = []
 
@@ -74,26 +79,27 @@ async def create_new_cafe(
 
     Только для администраторов.
     """
-    try:
-        await check_name_duplicate(cafe_in.name, session)
-        cafe_base_data = CafeBase(**cafe_in.model_dump())
+    await check_name_duplicate(cafe_in.name, session)
+    cafe_base_data = CafeBase(**cafe_in.model_dump())
 
-        new_cafe = await cafe_crud.create(obj_in=cafe_base_data, session=session)
+    new_cafe = await cafe_crud.create(obj_in=cafe_base_data, session=session)
 
-        if cafe_in.managers_id:
-            attached_managers = await update_cafe_managers_service(
-                cafe_id=new_cafe.id,
-                session=session,
-                managers_id=cafe_in.managers_id,
-            )
+    attached_managers = await validate_managers_id(
+        cafe_in.managers_id,
+        session,
+    )
 
-        new_cafe.managers = attached_managers
+    attached_managers = await update_cafe_managers_service(
+        cafe_id=new_cafe.id,
+        session=session,
+        managers_id=cafe_in.managers_id,
+    )
 
-        return new_cafe
+    if cafe_in.photo_id:
+        existing_image(cafe_in.photo_id)
 
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f'Сбой {str(e)} | тип {type(e).__name__}')
+    new_cafe.managers = attached_managers
+    return new_cafe
 
 
 @router.get(
@@ -140,15 +146,26 @@ async def partial_update_cafe(
     cafe_id: int,
     obj_in: CafeUpdate,
     session: SessionDep,
+    user: Optional[User] = Depends(current_user),
 ) -> Cafe:
     """Обновление информации о кафе по его ID.
 
     Только для администраторов и менеджеров.
     """
+    if user.role == RoleEnum.MANAGER:
+        db_cafe = await check_object_exists(
+            cafe_crud,
+            cafe_id,
+            session,
+            Cafe.id == user.cafe_id,
+        )
     db_cafe = await check_object_exists(cafe_crud, cafe_id, session)
 
     if obj_in.name is not None:
         await check_name_duplicate(obj_in.name, session)
+
+    if obj_in.photo_id:
+        existing_image(obj_in.photo_id)
 
     db_cafe = await cafe_crud.update(
         db_cafe,
@@ -158,7 +175,11 @@ async def partial_update_cafe(
 
     db_cafe = await add_managers_to_cafe_by_id(db_cafe, session)
 
-    if obj_in.managers_id is not None:
+    if obj_in.managers_id:
+        attached_managers = await validate_managers_id(
+            obj_in.managers_id,
+            session,
+        )
         attached_managers = await update_cafe_managers_service(
             cafe_id=db_cafe.id,
             session=session,
