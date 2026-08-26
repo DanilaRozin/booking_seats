@@ -1,6 +1,7 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, Path, Query, status
+from sqlalchemy.orm import selectinload
 
 from api import SessionDep
 from api.validators import check_object_exists
@@ -9,8 +10,8 @@ from crud.slots import slot_crud
 from models.slots import Slot
 from models.user import User
 from schemas.slots import CreateTimeSlot, FullTimeSlot, UpdateTimeSlot
-from services.slot_helper import get_slot_filters_for_user, get_slot_for_user
 
+from core.constants import RoleEnum
 from core.user import current_manager, current_user
 
 router = APIRouter()
@@ -24,6 +25,12 @@ async def get_all_slots(
     cafe_id: Annotated[int, Path(description='ID кафе')],
     session: SessionDep,
     user: User = Depends(current_user),
+    show_active: Annotated[
+        bool | None,
+        Query(
+            description=('Показывать все слоты в кафе, только активные или только не активные.'),
+        ),
+    ] = None,
 ) -> List[FullTimeSlot]:
     """### Получение списка доступных для бронирования временных слотов в кафе.
 
@@ -31,14 +38,15 @@ async def get_all_slots(
     * для **пользователей** - только активные.
     """
     await check_object_exists(cafe_crud, cafe_id, session=session)
-
-    base_conditions = [Slot.cafe_id == cafe_id]
-    role_conditions = get_slot_filters_for_user(user)
-    all_conditions = base_conditions + role_conditions
+    if user.role == RoleEnum.MANAGER and show_active is None or user.role == RoleEnum.USER:
+        show_active = True
+    conditions = [Slot.cafe_id == cafe_id]
+    if show_active is not None:
+        conditions.append(Slot.is_active.is_(show_active))
 
     return await slot_crud.get_multi(
         session,
-        *all_conditions,
+        *conditions,
     )
 
 
@@ -51,17 +59,21 @@ async def get_slot_from_id(
     slot_id: Annotated[int, Path(description='ID слота')],
     session: SessionDep,
     user: User = Depends(current_user),
-) -> FullTimeSlot:
+) -> Slot | None:
     """### Получение информации о временном слоте в кафе по его ID.
 
     * Для **администраторов** и **менеджеров** - все столы
     * Для **пользователей** - только активные.
     """
-    return await get_slot_for_user(
-        slot_id=slot_id,
-        cafe_id=cafe_id,
-        user=user,
-        session=session,
+    conditions = [Slot.cafe_id == cafe_id]
+    if user.role == RoleEnum.USER:
+        conditions.append(Slot.is_active.is_(True))
+
+    return await check_object_exists(
+        slot_crud,
+        slot_id,
+        session,
+        *conditions,
     )
 
 
@@ -86,7 +98,11 @@ async def create_slot(
         session=session,
         cafe_id=cafe_obj.id,
     )
-    return FullTimeSlot.model_validate(new_slot)
+    return await slot_crud.get_with_relations(
+        session,
+        new_slot.id,
+        selectinload(Slot.cafe),
+    )
 
 
 @router.patch(
@@ -97,22 +113,21 @@ async def create_slot(
 async def update_slot(
     slot_id: Annotated[int, Path(description='ID слота')],
     cafe_id: Annotated[int, Path(description='ID кафе')],
-    slot_in: UpdateTimeSlot,
+    obj_in: UpdateTimeSlot,
     session: SessionDep,
-    user: User = Depends(current_user),
 ) -> FullTimeSlot:
     """### Обновление информации о временом слоте в кафе по его ID.
 
     *Только для администраторов и менеджеров.*
     """
-    db_slot = await get_slot_for_user(
+    slot = await check_object_exists(
+        slot_crud,
         slot_id,
-        cafe_id,
-        user,
         session,
+        Slot.cafe_id == cafe_id,
     )
     return await slot_crud.update(
-        db_obj=db_slot,
-        obj_in=slot_in,
-        session=session,
+        slot,
+        obj_in,
+        session,
     )

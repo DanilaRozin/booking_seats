@@ -1,5 +1,6 @@
 import re
-from typing import Any, Dict
+from datetime import time
+from typing import Optional
 
 from fastapi import HTTPException, status
 
@@ -38,18 +39,19 @@ def validate_username(value: str) -> str:
 # -------------------------------------------------------------------------------------
 
 
-def check_start_and_end_time(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Валидация полей start_time и end_time."""
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
+def validate_time_pair(
+    start_time: Optional[time],
+    end_time: Optional[time],
+    require_both: bool = False,
+) -> None:
+    """Универсальная функция проверки времени."""
+    if require_both:
+        if start_time is None or end_time is None:
+            raise ValueError('Поля start_time и end_time обязательны для создания слота')
 
-    if start_time is None or end_time is None:
-        raise ValueError('Поля start_time и end_time обязательны для создания слота')
-
-    if end_time <= start_time:
-        raise ValueError('end_time должен быть строго больше start_time')
-
-    return data
+    if start_time is not None and end_time is not None:
+        if end_time <= start_time:
+            raise ValueError('end_time должен быть строго больше start_time')
 
 
 # //////////////////////////////////////////////////////////////////////////////////////
