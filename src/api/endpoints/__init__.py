@@ -11,5 +11,5 @@ __all__ = [
     'cafe_router',
     'table_router',
     'slot_router',
-    'dish_router'
+    'dish_router',
 ]

@@ -6,6 +6,6 @@ from crud.table import table_crud
 __all__ = [
     'cafe_crud',
     'table_crud',
-    'dish_crud'
+    'dish_crud',
     'slot_crud',
 ]

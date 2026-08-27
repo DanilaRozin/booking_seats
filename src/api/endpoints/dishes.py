@@ -53,12 +53,15 @@ async def get_all_dishes(
                  """
             ),
         ),
-        ] = None,
-    cafe_id: Annotated[int, Query(description=(
-            'ID кафе, в котором показывать блюда.'
-            'Если не задано - показывает все блюда во всех кафе'
-        ))] = None,
-
+    ] = None,
+    cafe_id: Annotated[
+        int,
+        Query(
+            description=(
+                'ID кафе, в котором показывать блюда.Если не задано - показывает все блюда во всех кафе'
+            ),
+        ),
+    ] = None,
 ) -> Sequence[Dish]:
     """Получение списка блюд.
 

@@ -9,5 +9,5 @@ __all__ = [
     'Cafe',
     'Table',
     'Slot',
-    'Dish'
+    'Dish',
 ]

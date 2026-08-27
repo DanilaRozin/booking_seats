@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, Uuid
+from sqlalchemy import Boolean, Float, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.base_model import Base
@@ -17,7 +17,9 @@ class Dish(Base):
     photo_id: Mapped[uuid.UUID] = mapped_column(Uuid, default=uuid.uuid4)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     is_active: Mapped[bool] = mapped_column(
-        Boolean, default=True, server_default='true'
+        Boolean,
+        default=True,
+        server_default='true',
     )
     # cafe_id: Mapped[int] = mapped_column(
     #     Integer,
