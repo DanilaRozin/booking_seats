@@ -17,10 +17,6 @@ from schemas.cafe import (
     CafeInfo,
     CafeUpdate,
 )
-from services.cafe import (
-    add_managers_to_cafe_by_id,
-    update_cafe_managers_service,
-)
 
 from core.constants import RoleEnum
 from core.db import get_session
@@ -89,16 +85,12 @@ async def create_new_cafe(
         session,
     )
 
-    attached_managers = await update_cafe_managers_service(
-        cafe_id=new_cafe.id,
-        session=session,
-        managers_id=cafe_in.managers_id,
-    )
-
     if cafe_in.photo_id:
         existing_image(cafe_in.photo_id)
 
     new_cafe.managers = attached_managers
+    await session.commit()
+    await session.refresh(new_cafe)
     return new_cafe
 
 
@@ -131,8 +123,9 @@ async def get_cafe_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Доступно только для менеджера или админа',
         )
-
-    return await add_managers_to_cafe_by_id(db_cafe, session)
+    await session.commit()
+    await session.refresh(db_cafe)
+    return db_cafe
 
 
 @router.patch(
@@ -167,25 +160,15 @@ async def partial_update_cafe(
     if obj_in.photo_id:
         existing_image(obj_in.photo_id)
 
-    db_cafe = await cafe_crud.update(
-        db_cafe,
-        obj_in,
-        session,
-    )
-
-    db_cafe = await add_managers_to_cafe_by_id(db_cafe, session)
+    db_cafe = await cafe_crud.update(db_cafe, obj_in, session)
 
     if obj_in.managers_id:
         attached_managers = await validate_managers_id(
             obj_in.managers_id,
             session,
         )
-        attached_managers = await update_cafe_managers_service(
-            cafe_id=db_cafe.id,
-            session=session,
-            managers_id=obj_in.managers_id,
-        )
         db_cafe.managers = attached_managers
 
     await session.commit()
+    await session.refresh(db_cafe)
     return db_cafe

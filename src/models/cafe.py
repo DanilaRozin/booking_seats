@@ -45,6 +45,7 @@ class Cafe(Base):
     managers: Mapped[list['User']] = relationship(
         'User',
         back_populates='managed_cafe_id',
+        lazy='selectin',
     )
     last_table_number: Mapped[int] = mapped_column(
         SmallInteger,

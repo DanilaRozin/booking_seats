@@ -58,12 +58,7 @@ class CafeBase(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator('phone')
-    @classmethod
-    def check_phone_format(cls, value: str) -> str:
-        """Проверяет соответствие формата телефона требованиям."""
-        validate_phone_number(value)
-        return value
+    _validate_phone = field_validator('phone')(validate_phone_number)
 
     @field_validator('name')
     @classmethod
@@ -81,7 +76,8 @@ class CafeCreate(CafeBase):
     """Схема создания кафе с привязкой менеджеров."""
 
     managers_id: list[int] = Field(
-        description='Менеджеры проекта. Обязательное поле.',
+        min_length=1,
+        description='ID менеджеров проекта. Обязательное поле.',
     )
 
 
@@ -125,6 +121,7 @@ class CafeUpdate(CafeBase, BaseModel):
     photo_id: Optional[PhotoId_Base] = None
     managers_id: list[int] | None = Field(
         default=None,
+        min_length=1,
         description='Новый список менеджеров кафе.',
     )
     is_active: bool | None = Field(
