@@ -81,7 +81,8 @@ class CafeCreate(CafeBase):
     """Схема создания кафе с привязкой менеджеров."""
 
     managers_id: list[int] = Field(
-        description='Менеджеры проекта. Обязательное поле.',
+        min_length=1,
+        description='ID менеджеров проекта. Обязательное поле.',
     )
 
 
@@ -125,6 +126,7 @@ class CafeUpdate(CafeBase, BaseModel):
     photo_id: Optional[PhotoId_Base] = None
     managers_id: list[int] | None = Field(
         default=None,
+        min_length=1,
         description='Новый список менеджеров кафе.',
     )
     is_active: bool | None = Field(

@@ -99,6 +99,13 @@ async def validate_managers_id(
         bad_managers = set(managers_id) - set(user.id for user in db_managers)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=f'Нельзя назначить менеджеров {list(bad_managers)}',
+            detail=f'Нельзя назначить несуществующих менеджеров {list(bad_managers)}',
         )
+    is_not_free = [user.id for user in db_managers if user.cafe_id is not None]
+    if is_not_free:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f'Нельзя назначить несвободных менеджеров: {is_not_free}',
+        )
+
     return list(db_managers)
