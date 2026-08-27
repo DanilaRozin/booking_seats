@@ -1,3 +1,4 @@
+from models.booking import Booking, BookingTableSlot
 from models.cafe import Cafe
 from models.slots import Slot
 from models.table import Table
@@ -8,4 +9,6 @@ __all__ = [
     'Cafe',
     'Table',
     'Slot',
+    'Booking',
+    'BookingTableSlot',
 ]

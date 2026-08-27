@@ -11,6 +11,8 @@ from core.base_model import Base
 if TYPE_CHECKING:
     from cafe import Cafe
 
+    from models.booking import BookingTableSlot
+
 
 class Slot(Base):
     """Модель временных слотов."""
@@ -28,6 +30,7 @@ class Slot(Base):
         back_populates='slots',
         lazy='selectin',
     )
+    booking_table_slots: Mapped[list['BookingTableSlot']] = relationship(back_populates='slot')
 
     __table_args__ = (
         CheckConstraint(

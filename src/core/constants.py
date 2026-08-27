@@ -27,3 +27,18 @@ class RoleEnum(StrEnum):
     USER = 'USER'
     MANAGER = 'MANAGER'
     ADMIN = 'ADMIN'
+
+
+class BookingStatus(StrEnum):
+    """Статус бронирования.
+
+    BOOKING - Забронировано
+    CANCELED - Отменено
+    ACTIVE - Клиент подошел
+    COMPLETED - Обслуживание завершено
+    """
+
+    BOOKING = 'BOOKING'
+    CANCELED = 'CANCELED'
+    ACTIVE = 'ACTIVE'
+    COMPLETED = 'COMPLETED'

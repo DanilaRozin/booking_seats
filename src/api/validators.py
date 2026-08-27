@@ -1,13 +1,19 @@
+from datetime import date
+
 from fastapi import HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from crud import cafe_crud
+from crud import cafe_crud, slot_crud, table_crud
 from crud.base import CRUDBase
+from models import Booking, BookingTableSlot, Slot, Table
+from schemas.booking import BookingCreate
 from schemas.user import UserCreate
 
 from core.base_model import Base
+from core.constants import BookingStatus
 from core.user import UserManager
 
 
@@ -64,4 +70,76 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Указанный username занят.',
+        )
+
+
+async def check_table_slot_booked(
+    cafe_id: int,
+    table_id: int,
+    slot_id: int,
+    booking_date: date,
+    session: AsyncSession,
+) -> None:
+    """Проверяет, не занят ли стол на выбранные дату и слот."""
+    booked = await session.execute(
+        select(BookingTableSlot.id)
+        .join(
+            Booking,
+            Booking.id == BookingTableSlot.booking_id,
+        )
+        .where(
+            Booking.cafe_id == cafe_id,
+            Booking.booking_date == booking_date,
+            BookingTableSlot.table_id == table_id,
+            BookingTableSlot.slot_id == slot_id,
+            Booking.status.in_(
+                (
+                    BookingStatus.BOOKING,
+                    BookingStatus.ACTIVE,
+                ),
+            ),
+            Booking.is_active.is_(True),
+        ),
+    )
+
+    if booked.scalars().first() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Выбранный стол уже занят на указанные даьу и слот',
+        )
+
+
+async def validate_booking_create(booking_create: BookingCreate, session: AsyncSession) -> None:
+    """Проверяет данные для создания бронирования."""
+    await check_object_exists(cafe_crud, booking_create.cafe_id, session)
+
+    table_slot_pairs = [(item.table_id, item.slot_id) for item in booking_create.tables_slots]
+
+    if len(table_slot_pairs) != len(set(table_slot_pairs)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='В бронировании указаны повторяющиеся пары стол-слот',
+        )
+
+    for table_slot in booking_create.tables_slots:
+        await check_object_exists(
+            table_crud,
+            table_slot.table_id,
+            session,
+            Table.cafe_id == booking_create.cafe_id,
+        )
+
+        await check_object_exists(
+            slot_crud,
+            table_slot.slot_id,
+            session,
+            Slot.cafe_id == booking_create.cafe_id,
+        )
+
+        await check_table_slot_booked(
+            cafe_id=booking_create.cafe_id,
+            table_id=table_slot.table_id,
+            slot_id=table_slot.slot_id,
+            booking_date=booking_create.booking_date,
+            session=session,
         )

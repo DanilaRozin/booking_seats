@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.base_model import Base
 
 if TYPE_CHECKING:
+    from models.booking import Booking
     from models.slots import Slot
     from models.table import Table
     from models.user import User
@@ -47,4 +48,8 @@ class Cafe(Base):
         back_populates='cafe',
         lazy='selectin',
         cascade='all, delete-orphan',
+    )
+    bookings: Mapped[list['Booking']] = relationship(
+        back_populates='cafe',
+        lazy='selectin',
     )
