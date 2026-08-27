@@ -3,7 +3,14 @@ from typing import Annotated, Any, Optional
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin, InvalidPasswordException
+from fastapi_users import (
+    BaseUserManager,
+    FastAPIUsers,
+    IntegerIDMixin,
+    InvalidPasswordException,
+    models,
+    schemas,
+)
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, JWTStrategy
 from fastapi_users.authentication.transport.bearer import BearerTransport
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
@@ -17,7 +24,6 @@ from schemas.validators import validate_phone_number
 from .constants import PASSWORD_MIN_LEN, RoleEnum
 from .db import get_session
 from .settings import settings
-from .utils import is_email
 
 
 class UserDatabase(SQLAlchemyUserDatabase):
@@ -80,11 +86,14 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
     async def authenticate(self, login: str, password: str) -> User | None:
         """Аутентифицирует пользователя по email или телефону."""
-        user = (
-            await self.user_db.get_by_email(login)
-            if is_email(login)
-            else await self.user_db.get_by_phone(login)
-        )
+        # Получает юзера по email
+        user = await self.user_db.get_by_email(login)
+        if user is None:
+            # Если по почте пользователь не найден - ищем по номеру
+            try:
+                user = await self.user_db.get_by_phone(login)
+            except HTTPException:
+                return None
 
         if user is None:
             self.password_helper.hash(password)
@@ -98,20 +107,41 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             return None
         if updated_password_hash is not None:
             await self.user_db.update(user, {'hashed_password': updated_password_hash})
-
         return user
 
     async def validate_password(self, password: str, user: UserCreate | User) -> None:
         """Проверяет пароль на минимальную длину и совпадение с email."""
-        if len(password) < PASSWORD_MIN_LEN:
+        plain_password = password.get_secret_value()
+        if len(plain_password) < PASSWORD_MIN_LEN:
             error = f'Пароль должен содержать не менее {PASSWORD_MIN_LEN} символов'
             raise InvalidPasswordException(reason=error)
-        if user.email in password:
+        if user.email in plain_password:
             error = 'Пароль не может содержать ваш email'
             raise InvalidPasswordException(reason=error)
-        if user.username in password:
+        if user.username in plain_password:
             error = 'Пароль не может содержать ваш username'
             raise InvalidPasswordException(reason=error)
+
+    async def create(
+        self,
+        user_create: schemas.UC,
+        safe: bool = False,
+        request: Optional[Request] = None,
+    ) -> models.UP:
+        """Переопределенный метод создания пользователя.
+
+        Требуетя так как передаваемый пароль Secretstr из Схемы
+        требует чтения с помощью метода get_secret_value().
+        Так же убрана проверка на наличие юзера по почте/юзернейму/номеру телефона,
+        так как он и так проверяется внутри пост запроса.
+        """
+        await self.validate_password(user_create.password, user_create)
+        user_dict = user_create.create_update_dict() if safe else user_create.create_update_dict_superuser()
+        password = user_dict.pop('password')
+        user_dict['hashed_password'] = self.password_helper.hash(password.get_secret_value())
+        created_user = await self.user_db.create(user_dict)
+        await self.on_after_register(created_user, request)
+        return created_user
 
     async def on_after_register(self, user: User, request: Optional[Request] = None) -> None:
         """Логирует успешную регистрацию пользователя."""

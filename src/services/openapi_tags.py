@@ -8,7 +8,7 @@ class OpenAPITags:
     описаний тэгов, переданных через метод add_tag().
     """
 
-    tag_list: list[dict] = []
+    tag_list: list[dict[str, str | None]] = []
 
     def add_tag(self, name: str, description: str | None = None) -> str:
         """Добавление тега и его описания в общий список.

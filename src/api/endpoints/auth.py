@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from schemas.user import UserLogin
+from schemas.user import TokenResponse, UserLogin
 
 from core.db import get_session
 from core.user import UserManager, auth_backend, get_user_manager
@@ -17,6 +17,7 @@ router = APIRouter()
 @router.post(
     '/login',
     summary='Получение токена авторизации',
+    response_model=TokenResponse,
 )
 async def login(
     credentials: UserLogin,
@@ -25,13 +26,13 @@ async def login(
     """Аутентифицирует пользователя по email и паролю, возвращает JWT-токен.
 
     - **login**: Адрес электроной почти или номер телефона
-    - **password**: пароль
+    - **password**: Пароль
 
     Если пользователь с указаными login/password существует, то вернётся JWT токен.
     """
     user = await user_manager.authenticate(
         login=credentials.login,
-        password=credentials.password,
+        password=credentials.password.get_secret_value(),
     )
     if user is None:
         raise HTTPException(
@@ -40,7 +41,7 @@ async def login(
         )
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Учетная запись заблокирована! Ваш id {user.id}. Обратитесь к администрации',
         )
 
