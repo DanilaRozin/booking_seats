@@ -58,12 +58,7 @@ class CafeBase(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator('phone')
-    @classmethod
-    def check_phone_format(cls, value: str) -> str:
-        """Проверяет соответствие формата телефона требованиям."""
-        validate_phone_number(value)
-        return value
+    _validate_phone = field_validator('phone')(validate_phone_number)
 
     @field_validator('name')
     @classmethod
