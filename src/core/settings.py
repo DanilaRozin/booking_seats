@@ -13,12 +13,18 @@ class Settings(BaseSettings):
     version: str = '0.0.1'
     description: str = 'Основа для приложения'
 
+    # Настройки для FastAPI users
+    secret: str = 'SECRET'
     # Настройки подключения к БД
     postgres_user: str
     postgres_password: str
     postgres_db: str
-    postgres_server: str = 'localhost'
+    postgres_server: str
     postgres_port: int = 5432
+    smtp_from: str
+    smtp_port: int
+    smtp_host: str
+    smtp_password: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / '../infra/.env',
