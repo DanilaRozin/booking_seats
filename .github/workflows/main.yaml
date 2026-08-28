@@ -63,6 +63,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           # passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: "infra/docker-compose.production.yaml"
+          strip_components: 1
           target: "python_projects/booking_seat"
 
       - name: Executing remote ssh commands to deploy
