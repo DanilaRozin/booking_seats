@@ -1,12 +1,11 @@
+import smtplib
 from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
-
-import aiosmtplib
 
 from core.settings import settings
 
 
-async def _send_email(to_addr: str, subject: str, body_text: str, body_html: str) -> None:
+def _send_email(to_addr: str, subject: str, body_text: str, body_html: str) -> None:
     """Отправляет письмо через SMTP.
 
     Args:
@@ -26,11 +25,7 @@ async def _send_email(to_addr: str, subject: str, body_text: str, body_html: str
     message.set_content(body_text)
     message.add_alternative(body_html, subtype='html')
 
-    await aiosmtplib.send(
-        message,
-        hostname=settings.smtp_host,
-        port=settings.smtp_port,
-        username=settings.smtp_from,
-        password=settings.smtp_password,
-        use_tls=True,
-    )
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+        server.starttls()
+        server.login(settings.smtp_from, settings.smtp_password)
+        server.send_message(message)
