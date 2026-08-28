@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     """Настройки приложения."""
 
     # Общие настройки
-    title: str = 'Базовый набор FastAPI+SQLAlchemy+Postgres'
+    title: str = 'Booking Seats'
     version: str = '0.0.1'
     description: str = 'Основа для приложения'
 

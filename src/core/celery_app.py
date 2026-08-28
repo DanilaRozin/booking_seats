@@ -5,7 +5,7 @@ from celery import Celery
 from core.settings import settings
 
 celery_app = Celery(
-    'tg_bot_tasks',
+    'booking_seats',
     broker=settings.rabbitmq.celery_broker_url,
     backend=settings.redis.celery_backend_url,
     include=[
