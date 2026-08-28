@@ -1,8 +1,43 @@
 from pathlib import Path
 
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class RabbitMQConfig(BaseModel):
+    """Конфигурация RabbitMQ."""
+
+    user: str = Field(..., alias='RABBITMQ_DEFAULT_USER')
+    password: SecretStr = Field(..., alias='RABBITMQ_DEFAULT_PASS')
+    host: str = Field(..., alias='RABBITMQ_HOST')
+    port: int = Field(default=5672, alias='RABBITMQ_PORT')
+    vhost: str = Field(..., alias='RABBITMQ_DEFAULT_VHOST')
+
+    @property
+    def celery_broker_url(self) -> str:
+        """Конкатенирует URL Celery backend."""
+        return f'amqp;//{self.user}:{self.password.get_secret_value()}@{self.host}:{self.port}/{self.vhost}'
+
+
+class RedisDB(BaseModel):
+    """БД Redis."""
+
+    celery_backend: int = Field(..., alias='REDIS_DB_CELERY_BACKEND')
+
+
+class RedisConfig(BaseModel):
+    """Конфигурация Redis."""
+
+    host: str = Field(..., alias='REDIS_HOST')
+    port: int = Field(default=6379, alias='REDIS_PORT')
+    db: RedisDB
+
+    @property
+    def celery_backend_url(self) -> str:
+        """Конкатенирует URL Celery backend."""
+        return f'redis;//{self.host}:{self.port}/{self.db.celery_backend}'
 
 
 class Settings(BaseSettings):
@@ -25,6 +60,8 @@ class Settings(BaseSettings):
     smtp_port: int
     smtp_host: str
     smtp_password: str
+    redis: RedisConfig
+    rabbitmq: RabbitMQConfig
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / '../infra/.env',
