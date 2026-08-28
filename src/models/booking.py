@@ -57,8 +57,8 @@ class BookingTableSlot(Base):
     booking: Mapped['Booking'] = relationship(
         back_populates='tables_slots',
     )
-    table: Mapped['Table'] = relationship(back_populates='booking_table_slots')
-    slot: Mapped['Slot'] = relationship(back_populates='booking_table_slots')
+    table: Mapped['Table'] = relationship(back_populates='booking_table_slots', lazy='selectin')
+    slot: Mapped['Slot'] = relationship(back_populates='booking_table_slots', lazy='selectin')
 
     __table_args__ = (
         ForeignKeyConstraint(
