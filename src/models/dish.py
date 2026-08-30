@@ -1,9 +1,21 @@
 import uuid
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Float, String, Uuid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, Column, Float, ForeignKey, String, Table, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.base_model import Base
+
+if TYPE_CHECKING:
+    from models.cafe import Cafe
+
+
+dish_cafe_table = Table(
+    'dish_cafe_table',
+    Base.metadata,
+    Column('cafe_id', ForeignKey('cafes.id', ondelete='CASCADE'), primary_key=True),
+    Column('dish_id', ForeignKey('dishes.id', ondelete='CASCADE'), primary_key=True),
+)
 
 
 class Dish(Base):
@@ -21,8 +33,8 @@ class Dish(Base):
         default=True,
         server_default='true',
     )
-    # cafe_id: Mapped[int] = mapped_column(
-    #     Integer,
-    #     ForeignKey('cafes.id'),
-    #     primary_key=True,
-    # )
+    cafe_id: Mapped[list['Cafe']] = relationship(
+        secondary=dish_cafe_table,
+        back_populates='dishes',
+        lazy='selectin',
+    )
