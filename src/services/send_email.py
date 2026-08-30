@@ -16,7 +16,7 @@ def _send_email(to_addr: str, subject: str, body_text: str, body_html: str) -> N
 
     """
     message = EmailMessage()
-    message['From'] = settings.smtp_from
+    message['From'] = settings.smtp.login
     message['To'] = to_addr
     message['Subject'] = subject
     message['Date'] = formatdate(localtime=True)
@@ -25,7 +25,7 @@ def _send_email(to_addr: str, subject: str, body_text: str, body_html: str) -> N
     message.set_content(body_text)
     message.add_alternative(body_html, subtype='html')
 
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+    with smtplib.SMTP(settings.smtp.host, settings.smtp.port) as server:
         server.starttls()
-        server.login(settings.smtp_from, settings.smtp_password)
+        server.login(settings.smtp.login, settings.smtp.password)
         server.send_message(message)
