@@ -9,9 +9,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ__USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ__PASSWORD}
-      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ__VHOST}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ__USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ__PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ__VHOST}
     ports:
       - 15672:15672  # Management UI
     volumes:
@@ -34,9 +34,10 @@ services:
     image: postgres:17-alpine
     ports:
       - 5432:5432
-    env_file:
-      - .env
     environment:
+      POSTGRES_USER: ${POSTGRES__USER}
+      POSTGRES_PASSWORD: ${POSTGRES__PASSWORD}
+      POSTGRES_DB: ${POSTGRES__DB}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data/pgdata
@@ -72,8 +73,6 @@ services:
     build: ..
     env_file:
       - .env
-    volumes:
-      - ..:/workspace:cached
     entrypoint: []
     command: celery -A core.celery_app worker --loglevel=info
     depends_on:
@@ -88,6 +87,9 @@ services:
 
   flower:
     image: mher/flower:2.0
+    environment:
+      CELERY_BROKER_URL: amqp://${RABBITMQ__USER}:${RABBITMQ__PASSWORD}@${RABBITMQ__HOST}:${RABBITMQ__PORT}/${RABBITMQ__VHOST}
+      CELERY_RESULT_BACKEND: redis://${REDIS__HOST}:${REDIS__PORT}/${REDIS__DB_CELERY_BACKEND}
     command: celery flower --port=5555
     env_file:
       - .env

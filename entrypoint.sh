@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while ! nc -z $POSTGRES_SERVER $POSTGRES_PORT; do
+while ! nc -z $POSTGRES__SERVER $POSTGRES__PORT; do
   echo "Waiting for postgres to start..."
   sleep 3
 done

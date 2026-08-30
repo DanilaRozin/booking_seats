@@ -21,7 +21,7 @@ celery_app = Celery(
     broker=settings.rabbitmq.celery_broker_url,
     backend=settings.redis.celery_backend_url,
     include=[
-        'tasks.email_notify',
+        'tasks.booking_notifications.email_notifications',
     ],
 )
 

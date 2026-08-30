@@ -59,6 +59,8 @@ services:
     build: .
     environment:
       ENV_FILE: /workspace/.devcontainer/.env
+    ports:
+      - 8000:8000
     volumes:
       - ..:/workspace:cached
     command: sleep infinity

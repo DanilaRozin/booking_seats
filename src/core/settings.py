@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent
-_env_file = Path(os.getenv('ENV_FILE', str(PROJECT_ROOT / 'infra' / '.env')))
+_env_file = Path(os.getenv('ENV_FILE', PROJECT_ROOT / 'infra' / '.env'))
 
 
 def settings_config(env_prefix: str = '') -> SettingsConfigDict:
