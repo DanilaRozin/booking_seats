@@ -8,8 +8,10 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
-    env_file:
-      - .env
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ__USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ__PASSWORD}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ__VHOST}
     ports:
       - 15672:15672  # Management UI
     volumes:
@@ -31,7 +33,7 @@ services:
   db:
     image: postgres:17-alpine
     ports:
-      - "5432:5432"
+      - 5432:5432
     env_file:
       - .env
     environment:
@@ -47,13 +49,13 @@ services:
                -c wal_buffers=16MB
                -c default_statistics_target=100
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB" ]
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES__USER -d $POSTGRES__DB" ]
       interval: 30s
       timeout: 10s
       retries: 5
 
   app:
-    build: ../
+    build: ..
     env_file:
       - .env
     ports:
@@ -65,6 +67,24 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+
+  celery_worker:
+    build: ..
+    env_file:
+      - .env
+    volumes:
+      - ..:/workspace:cached
+    entrypoint: []
+    command: celery -A core.celery_app worker --loglevel=info
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
 
   flower:
     image: mher/flower:2.0
