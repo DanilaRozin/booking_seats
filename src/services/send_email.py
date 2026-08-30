@@ -3,6 +3,8 @@ from email.utils import formatdate, make_msgid
 from pathlib import Path
 
 import aiosmtplib
+from aiosmtplib.errors import SMTPException
+from loguru import logger
 
 from schemas.user import UserCreate
 
@@ -28,15 +30,18 @@ async def send_email(to: str, subject: str, body_text: str, body_html: str) -> N
 
     message.set_content(body_text)
     message.add_alternative(body_html, subtype='html')
-
-    await aiosmtplib.send(
-        message,
-        hostname=settings.smtp_host,
-        port=settings.smtp_port,
-        username=settings.smtp_from,
-        password=settings.smtp_password,
-        use_tls=True,
-    )
+    try:
+        await aiosmtplib.send(
+            message,
+            hostname=settings.smtp_host,
+            port=settings.smtp_port,
+            username=settings.smtp_from,
+            password=settings.smtp_password,
+            use_tls=True,
+        )
+        logger.info(f'Сообщение отправлено на {to}')
+    except SMTPException:
+        logger.exception(f'Ошибка при отправке сообщения на {to}.')
 
 
 async def email_registration(user: UserCreate) -> None:
