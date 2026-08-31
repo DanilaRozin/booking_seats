@@ -4,9 +4,12 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import SmallInteger, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from models.dish import dish_cafe_table
+
 from core.base_model import Base
 
 if TYPE_CHECKING:
+    from models.dish import Dish
     from models.slots import Slot
     from models.table import Table
     from models.user import User
@@ -56,4 +59,9 @@ class Cafe(Base):
         back_populates='cafe',
         lazy='selectin',
         cascade='all, delete-orphan',
+    )
+    dishes: Mapped[list['Dish']] = relationship(
+        back_populates='cafe',
+        lazy='selectin',
+        secondary=dish_cafe_table,
     )
