@@ -1,14 +1,15 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep
-from api.validators import existing_user
+from api.validators import check_object_exists, existing_user
 from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
+from services.send_email import email_registration
 
 from core.user import UserManager, current_manager, current_user, ensure_can_deactivate, get_user_manager
 
@@ -23,6 +24,7 @@ router = APIRouter()
     summary='Регистрация пользователя',
 )
 async def register(
+    background_task: BackgroundTasks,
     user_create: UserCreate,
     request: Request,
     user_manager: UserManager = Depends(get_user_manager),
@@ -43,6 +45,10 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.reason,
         )
+    background_task.add_task(
+        email_registration,
+        user_create,
+    )
     return user
 
 
@@ -98,7 +104,7 @@ async def get_user_info_by_id(
     user_id: int,
 ) -> User:
     """Возвращает данные пользователя по id (для менеджеров и админов)."""
-    return await user_crud.get(obj_id=user_id, session=session)
+    return await check_object_exists(user_crud, user_id, session)
 
 
 @router.patch(
@@ -106,6 +112,7 @@ async def get_user_info_by_id(
     response_model=UserInfo,
 )
 async def update_user_info(
+    session: SessionDep,
     obj_in: UserAdminUpdate,
     user_id: int,
     request: Request,
@@ -114,5 +121,5 @@ async def update_user_info(
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
     ensure_can_deactivate(obj_in, user)
-    user_obj = await user_manager.get(user_id)
+    user_obj = await check_object_exists(user_crud, user_id, session)
     return await user_manager.update(obj_in, user_obj, request=request)
