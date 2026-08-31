@@ -1,5 +1,5 @@
 {
-  "name": "FastAPI & SQLAlchemy & Postgres",
+  "name": "Booking Seats",
   "dockerComposeFile": "./docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
