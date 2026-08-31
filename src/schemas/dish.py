@@ -13,7 +13,7 @@ class DishBase(BaseModel):
     name: str | None = Field(
         default=None,
         title='Name',
-        )
+    )
     description: str | None = Field(
         default=None,
         title='Description',
@@ -22,8 +22,7 @@ class DishBase(BaseModel):
         default=None,
         title='Photo Id',
     )
-    price: float | None = Field(
-        default=None,
+    price: float = Field(
         title='Price',
     )
 
@@ -44,12 +43,16 @@ class DishInfo(DishBase, BaseSchema):
     is_active: bool = Field(title='Is Active')
     created_at: datetime = Field(title='Created At')
     updated_at: datetime = Field(title='Updated At')
-
     model_config = ConfigDict(from_attributes=True)
 
 
 class DishUpdate(DishBase):
     """Схема тела запроса на изменение объекта 'Блюд'."""
+
+    price: float | None = Field(
+        default=None,
+        title='Price',
+    )
 
     cafes_id: list[int] | None = Field(
         default=None,
