@@ -39,7 +39,7 @@ class DishInfo(DishBase, BaseSchema):
     """Схема представления из базы данных объектов модели 'Блюда'."""
 
     id: int = Field(title='Id')
-    cafes: list[CafeShortInfo] = Field(title='Cafes')
+    cafe: list[CafeShortInfo] = Field(title='Cafes')
     is_active: bool = Field(title='Is Active')
     created_at: datetime = Field(title='Created At')
     updated_at: datetime = Field(title='Updated At')
