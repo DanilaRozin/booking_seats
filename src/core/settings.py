@@ -30,7 +30,7 @@ def settings_config(env_prefix: str = '') -> SettingsConfigDict:
 class RabbitMQConfig(BaseSettings):
     """Конфигурация RabbitMQ."""
 
-    model_config = settings_config(env_prefix='RABBITMQ__')
+    model_config = settings_config(env_prefix='RABBITMQ_')
 
     user: str
     password: SecretStr
@@ -47,7 +47,7 @@ class RabbitMQConfig(BaseSettings):
 class RedisConfig(BaseSettings):
     """Конфигурация Redis."""
 
-    model_config = settings_config(env_prefix='REDIS__')
+    model_config = settings_config(env_prefix='REDIS_')
 
     host: str
     port: int
@@ -62,7 +62,7 @@ class RedisConfig(BaseSettings):
 class SMTPConfig(BaseSettings):
     """Конфигурация SMTP."""
 
-    model_config = settings_config(env_prefix='SMTP__')
+    model_config = settings_config(env_prefix='SMTP_')
 
     host: str
     port: int
@@ -73,7 +73,7 @@ class SMTPConfig(BaseSettings):
 class POSTGRESConfig(BaseSettings):
     """Конфигурация POSTGRES."""
 
-    model_config = settings_config(env_prefix='POSTGRES__')
+    model_config = settings_config(env_prefix='POSTGRES_')
 
     server: str
     port: int
