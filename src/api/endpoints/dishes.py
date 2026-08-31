@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
 from api.validators import check_dish_exists, check_object_exists
-from crud import dish_crud
+from crud import cafe_crud, dish_crud
+
 from models import Dish
 from schemas.dish import DishCreate, DishInfo, DishUpdate
 
@@ -66,7 +67,7 @@ async def get_all_dishes(
     conditions = []
 
     if cafe_id is not None:
-        await check_object_exists(cafe_id, session)
+        await check_object_exists(cafe_crud, cafe_id, session)
         conditions = [Dish.cafe_id == cafe_id]
 
     if (user.role, show_active) in only_active_variants:
