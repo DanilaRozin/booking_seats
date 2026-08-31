@@ -33,7 +33,7 @@ class Dish(Base):
         default=True,
         server_default='true',
     )
-    cafe_id: Mapped[list['Cafe']] = relationship(
+    cafe: Mapped[list['Cafe']] = relationship(
         secondary=dish_cafe_table,
         back_populates='dishes',
         lazy='selectin',

@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Path, Query
 from api import SessionDep, UserDep
 from api.validators import check_dish_exists, check_object_exists
 from crud import cafe_crud, dish_crud
-
 from models import Dish
 from schemas.dish import DishCreate, DishInfo, DishUpdate
 
