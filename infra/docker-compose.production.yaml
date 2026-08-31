@@ -75,6 +75,7 @@ services:
     image: aleht/booking_seat:latest
     env_file:
       - .env
+    restart: unless-stopped
     entrypoint: []
     command: celery -A core.celery_app worker --loglevel=info
     depends_on:
