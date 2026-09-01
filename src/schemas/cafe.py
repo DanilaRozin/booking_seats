@@ -1,42 +1,95 @@
+import re
+from typing import Annotated, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import HTTPException, status
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from schemas.base_schema import BaseSchema
 from schemas.user import UserBase
+from schemas.validators import validate_phone_number
+
+CAFE_NAME_PATTERN = r'^[a-zA-Z0-9а-яА-ЯёЁ\s\-\,\.\'\"\(\)]+$'
+
+NameBase = Annotated[
+    str,
+    Field(
+        max_length=40,
+        examples=['Новое кафе'],
+        description='Название кафе. Обязательное поле. Не более 40 символов.',
+    ),
+]
+AddressBase = Annotated[
+    str,
+    Field(
+        max_length=150,
+        description='Адрес кафе. Обязательное поле. Не более 150 символов.',
+    ),
+]
+PhoneBase = Annotated[
+    str,
+    Field(
+        description='Контактный телефон. Обязательное поле: +7XXXXXXXXXX или 8XXXXXXXXXX.',
+    ),
+]
+DescriptionBase = Annotated[
+    str,
+    Field(
+        max_length=300,
+        description='О кафе. Не более 300 символов.',
+    ),
+]
+PhotoId_Base = Annotated[
+    UUID,
+    Field(
+        description='Уникальный идентификатор изображения кафе в формате UUID.',
+    ),
+]
 
 
 class CafeBase(BaseModel):
     """Чистая схема кафе без привязки к менеджерам."""
 
-    name: str = Field(description='Название кафе')
-    address: str = Field(description='Адрес кафе')
-    phone: str = Field(description='Контактный телефон')
-    description: str = Field(description='О кафе')
-    photo_id: UUID = Field(
-        description='Уникальный идентификатор изображения кафе',
-    )
+    name: NameBase
+    address: AddressBase
+    phone: PhoneBase
+    description: Optional[DescriptionBase] = None
+    photo_id: Optional[PhotoId_Base] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    _validate_phone = field_validator('phone')(validate_phone_number)
+
+    @field_validator('name')
+    @classmethod
+    def check_cafe_name(cls, value: str) -> str:
+        """Проверяет соответствие названия требованиям."""
+        if not re.match(CAFE_NAME_PATTERN, value):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail='Недопустимые символы в названии кафе.',
+            )
+        return value
 
 
 class CafeCreate(CafeBase):
     """Схема создания кафе с привязкой менеджеров."""
 
     managers_id: list[int] = Field(
-        description='Менеджеры проекта',
+        min_length=1,
+        description='ID менеджеров проекта. Обязательное поле.',
     )
 
 
 class CafeShortInfo(BaseModel):
     """Краткая схема кафе."""
 
-    id: int = Field()
-    name: str = Field()
-    address: str = Field()
-    phone: str = Field()
-    description: str = Field()
-    photo_id: UUID = Field()
+    id: Optional[int] = None
+    name: Optional[NameBase] = None
+    address: Optional[AddressBase] = None
+    phone: Optional[PhoneBase] = None
+    description: Optional[DescriptionBase] = None
+    photo_id: Optional[PhotoId_Base] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -50,39 +103,28 @@ class CafeManagersInfo(UserBase):
 
 
 class CafeInfo(BaseSchema, CafeShortInfo):
-    """Схема для работы кафе с БД."""
+    """Полная схема кафе."""
 
-    managers: list[CafeManagersInfo] = Field(description='Менеджеры кафе')
+    managers: list[CafeManagersInfo] = Field(
+        default=None,
+        description='Менеджеры кафе.',
+    )
 
 
-class CafeUpdate(BaseModel):
+class CafeUpdate(CafeBase, BaseModel):
     """Схема редактирования кафе."""
 
-    name: str | None = Field(
-        default=None,
-        description='Новое название кафе',
-    )
-    address: str | None = Field(
-        default=None,
-        description='Новый адрес кафе',
-    )
-    phone: str | None = Field(
-        default=None,
-        description='Новый номер телефона кафе',
-    )
-    description: str | None = Field(
-        default=None,
-        description='Новое описание кафе',
-    )
-    photo_id: UUID | None = Field(
-        default=None,
-        description='Уникальный идентификатор нового изображения кафе',
-    )
+    name: Optional[NameBase] = None
+    address: Optional[AddressBase] = None
+    phone: Optional[PhoneBase] = None
+    description: Optional[DescriptionBase] = None
+    photo_id: Optional[PhotoId_Base] = None
     managers_id: list[int] | None = Field(
         default=None,
-        description='Новый список менеджеров кафе',
+        min_length=1,
+        description='Новый список менеджеров кафе.',
     )
     is_active: bool | None = Field(
         default=None,
-        description='Новое состояние кафе',
+        description='Новое состояние кафе.',
     )

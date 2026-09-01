@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel
@@ -6,14 +7,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from crud import cafe_crud, slot_crud, table_crud
+from crud import cafe_crud, dish_crud, slot_crud, table_crud
 from crud.base import CRUDBase
-from models import Booking, BookingTableSlot, Slot, Table
+from models import Booking, BookingTableSlot, Slot, Table, User
 from schemas.booking import BookingCreate, BookingUpdate
 from schemas.user import UserCreate
+from services.media import MediaService
 
 from core.base_model import Base
-from core.constants import BookingStatus
+from core.constants import BookingStatus, RoleEnum
 from core.user import UserManager
 
 
@@ -200,3 +202,58 @@ async def validate_booking_update(
             session=session,
             booking_id=booking.id,
         )
+
+
+async def check_dish_exists(
+    dish_id: int,
+    session: AsyncSession,
+) -> object:
+    """Проверка существования в БД блюда."""
+    db_dish = await dish_crud.get(
+        dish_id,
+        session,
+    )
+    if db_dish is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Блюдо не найдено в базе',
+        )
+    return db_dish
+
+
+def existing_image(photo_id: UUID) -> None:
+    """Проверка существует ли файл картинки."""
+    try:
+        MediaService.get_image_path(photo_id)
+    except HTTPException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Не найден файл изображения кафе.',
+        )
+
+
+async def validate_managers_id(
+    managers_id: list[int],
+    session: AsyncSession,
+) -> list[int]:
+    """Проверка на валидность списка менеджеров."""
+    stmt = select(User).where(
+        User.id.in_(managers_id),
+        User.role == RoleEnum.MANAGER,
+    )
+    result = await session.execute(stmt)
+    db_managers = result.scalars().all()
+    if len(db_managers) != len(managers_id):
+        bad_managers = set(managers_id) - set(user.id for user in db_managers)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f'Нельзя назначить несуществующих менеджеров {list(bad_managers)}',
+        )
+    is_not_free = [user.id for user in db_managers if user.cafe_id is not None]
+    if is_not_free:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f'Нельзя назначить несвободных менеджеров: {is_not_free}',
+        )
+
+    return list(db_managers)

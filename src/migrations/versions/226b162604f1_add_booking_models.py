@@ -1,7 +1,7 @@
 """add booking models
 
 Revision ID: 226b162604f1
-Revises: 29fbf1bcb8ab
+Revises: 46a01970c1b9
 Create Date: 2026-08-26 12:48:12.496636
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '226b162604f1'
-down_revision: Union[str, Sequence[str], None] = '29fbf1bcb8ab'
+down_revision: Union[str, Sequence[str], None] = '46a01970c1b9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

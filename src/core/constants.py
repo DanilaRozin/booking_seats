@@ -4,6 +4,9 @@ from pathlib import Path
 TABLE_DESC_LENGTH = 256
 """Максимальное количество символов для поля "Описание" модели "Столов"."""
 
+SLOT_DESC_LENGTH = 300
+"""Максимальное количество символов для поля "Описание" модели "Слотов"."""
+
 NAME_MIN_LENGTH = 2
 NAME_MAX_LENGTH = 20
 

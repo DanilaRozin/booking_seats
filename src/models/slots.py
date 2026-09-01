@@ -7,6 +7,7 @@ from sqlalchemy import CheckConstraint, ForeignKey, String, Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.base_model import Base
+from core.constants import SLOT_DESC_LENGTH
 
 if TYPE_CHECKING:
     from cafe import Cafe
@@ -23,7 +24,7 @@ class Slot(Base):
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
     description: Mapped[str | None] = mapped_column(
-        String(),
+        String(SLOT_DESC_LENGTH),
         nullable=True,
     )
     cafe: Mapped['Cafe'] = relationship(

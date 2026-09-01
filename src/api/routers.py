@@ -1,6 +1,14 @@
 from fastapi import APIRouter
 
-from api.endpoints import auth_router, booking_router, cafe_router, slot_router, table_router, user_router
+from api.endpoints import (
+    auth_router,
+    booking_router,
+    cafe_router,
+    dish_router,
+    slot_router,
+    table_router,
+    user_router,
+)
 from api.endpoints.media import router as media_router
 from services.openapi_tags import OpenAPITags
 
@@ -49,4 +57,10 @@ main_router.include_router(
     booking_router,
     prefix='/booking',
     tags=[tags.add_tag('Бронирование', 'Управление бронированием')],
+)
+
+main_router.include_router(
+    dish_router,
+    prefix='/dishes',
+    tags=[tags.add_tag('Блюда', 'Управление блюдами')],
 )

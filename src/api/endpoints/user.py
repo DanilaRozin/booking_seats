@@ -5,9 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep
+from api.validators import check_object_exists, existing_user
 from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
+from tasks.booking_notifications.email_notifications import notify_registration
 
 from core.user import UserManager, current_manager, current_user, ensure_can_deactivate, get_user_manager
 
@@ -34,19 +36,20 @@ async def register(
     - **tg_id**: Telegram ID (опционально)
     - **password**: пароль
     """
-    # await existing_user(user_create, user_manager)
+    await existing_user(user_create, user_manager)
     try:
         user = await user_manager.create(user_create, safe=True, request=request)
-    except exceptions.UserAlreadyExists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='REGISTER_USER_ALREADY_EXISTS',
-        )
     except exceptions.InvalidPasswordException as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'REGISTER_INVALID_PASSWORD', 'reason': e.reason},
+            detail=e.reason,
         )
+
+    notify_registration.delay(
+        user_id=user.id,
+        username=user.username,
+        user_email=user.email,
+    )
     return user
 
 
@@ -102,7 +105,7 @@ async def get_user_info_by_id(
     user_id: int,
 ) -> User:
     """Возвращает данные пользователя по id (для менеджеров и админов)."""
-    return await user_crud.get(obj_id=user_id, session=session)
+    return await check_object_exists(user_crud, user_id, session)
 
 
 @router.patch(
@@ -110,6 +113,7 @@ async def get_user_info_by_id(
     response_model=UserInfo,
 )
 async def update_user_info(
+    session: SessionDep,
     obj_in: UserAdminUpdate,
     user_id: int,
     request: Request,
@@ -118,5 +122,5 @@ async def update_user_info(
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
     ensure_can_deactivate(obj_in, user)
-    user_obj = await user_manager.get(user_id)
+    user_obj = await check_object_exists(user_crud, user_id, session)
     return await user_manager.update(obj_in, user_obj, request=request)
