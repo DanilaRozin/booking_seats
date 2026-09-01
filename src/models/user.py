@@ -29,4 +29,9 @@ class User(SQLAlchemyBaseUserTable[int], Base):
         back_populates='managers',
     )
 
+    bookings: Mapped[list['Booking']] = relationship(  # noqa # type: ignore
+        back_populates='user',
+        lazy='selectin',
+    )
+
     __table_args__ = (CheckConstraint('length(username) >= 5', name='name_min_length'),)
