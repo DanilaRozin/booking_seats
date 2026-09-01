@@ -31,7 +31,10 @@ class Slot(Base):
         back_populates='slots',
         lazy='selectin',
     )
-    booking_table_slots: Mapped[list['BookingTableSlot']] = relationship(back_populates='slot')
+    booking_table_slots: Mapped[list['BookingTableSlot']] = relationship(
+        back_populates='slot',
+        lazy='selectin',
+    )
 
     __table_args__ = (
         CheckConstraint(

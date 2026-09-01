@@ -86,7 +86,9 @@ async def get_booking_by_id(
 ) -> Booking:
     """Получение информации о бронировании по его ID.
 
-    Для администраторов и менеджеров - все бронирования, для пользователей - только свои.
+    Для администраторов - все бронирования,
+    для менеджеров - только связанные с их кафе,
+    для пользователей - только свои.
     """
     booking = await check_object_exists(booking_crud, booking_id, session)
 
@@ -95,6 +97,13 @@ async def get_booking_by_id(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Доступ к бронированию запрещен',
         )
+
+    if user.role == RoleEnum.MANAGER and booking.cafe_id != user.cafe_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Доступ к бронированию другого кафе запрещен',
+        )
+
     return booking
 
 
@@ -111,7 +120,9 @@ async def update_booking(
 ) -> Booking:
     """Обновление информации о бронировании по его ID.
 
-    Для администраторов и менеджеров - все бронирования, для пользователей - только свои.
+    Для администраторов - все бронирования,
+    для менеджеров - только связанные с их кафе,
+    для пользователей - только свои.
     """
     booking = await check_object_exists(booking_crud, booking_id, session)
 
@@ -120,5 +131,11 @@ async def update_booking(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Доступ к бронированию запрещен',
         )
+    if user.role == RoleEnum.MANAGER and booking.cafe_id != user.cafe_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Доступ к бронированию другого кафе запрещен',
+        )
+
     await validate_booking_update(booking, booking_in, session)
     return await booking_crud.update(booking, booking_in, session)
