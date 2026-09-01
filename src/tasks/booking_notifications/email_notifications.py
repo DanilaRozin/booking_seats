@@ -16,7 +16,7 @@ from core.settings import settings
 if TYPE_CHECKING:
     from datetime import datetime
 
-TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'tasks' / 'templates'
+TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'templates'
 
 
 @celery_app.task(
@@ -50,12 +50,23 @@ def notify_registration(
             text=body_text_msg,
             service_name=service_name,
         )
-        _send_email(
-            to_addr=user_email,
-            subject=subject_msg,
-            body_text=body_text_msg,
-            body_html=body_html_msg,
-        )
+        logger.debug('Начинаю отправку email через SMTP')
+        try:
+            _send_email(
+                to_addr=user_email,
+                subject=subject_msg,
+                body_text=body_text_msg,
+                body_html=body_html_msg,
+            )
+        except Exception as err:
+            logger.error(
+                'Ошибка отправки email | to={email} | error={error}',
+                email=user_email,
+                error=err,
+            )
+            raise
+
+        logger.info('Email успешно отправлен | to={email}', email=user_email)
 
 
 @celery_app.task(
