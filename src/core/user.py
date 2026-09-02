@@ -188,15 +188,24 @@ def require_role(*allowed_roles: RoleEnum) -> Callable[[User], Coroutine[Any, An
     return dependency
 
 
-def ensure_can_deactivate(obj_in: UserAdminUpdate, user: User) -> None:
+def ensure_can_deactivate(
+    obj_in: UserAdminUpdate,
+    user: User,
+    user_id: int = None,
+) -> None:
     """Запрещает деактивацию всем, кроме суперюзера.
 
     Предназначена для использования в patch запросах к юзерам и кафе.
     """
-    if obj_in.is_active is False and not user.is_superuser:
+    if obj_in.is_active is False and (not user.role.ADMIN or not user.is_superuser):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail='У вас недостаточно прав для деакцтивации.',
+            detail='У вас недостаточно прав для деактивации.',
+        )
+    if obj_in.is_active is False and user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя деактивировать самого себя.',
         )
 
 
