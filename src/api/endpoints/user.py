@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep
-from api.validators import check_object_exists, ensure_can_deactivate, existing_user
+from api.validators import check_object_exists, ensure_can_change_role, ensure_can_deactivate, existing_user
 from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
@@ -122,5 +122,6 @@ async def update_user_info(
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
     user_obj = await check_object_exists(user_crud, user_id, session)
-    ensure_can_deactivate(obj_in, user)
+    ensure_can_deactivate(obj_in, user, user_id)
+    ensure_can_change_role(obj_in, user, user_id)
     return await user_manager.update(obj_in, user_obj, request=request)

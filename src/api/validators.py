@@ -279,3 +279,26 @@ def ensure_can_deactivate(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Нельзя деактивировать самого себя.',
         )
+    if obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER] and (not user.role.ADMIN or not user.is_superuser):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для выдачи роли.',
+        )
+
+
+def ensure_can_change_role(
+    obj_in: UserAdminUpdate | CafeUpdate,
+    user: User,
+    user_id: int = None,
+) -> None:
+    """Запрещает менять ротль всем, кроме суперюзера и админа."""
+    if obj_in.role and user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя сменить роль самому себе.',
+        )
+    if obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER] and (not user.role.ADMIN or not user.is_superuser):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для изменения роли.',
+        )
