@@ -7,7 +7,7 @@ TABLE_DESC_LENGTH = 256
 SLOT_DESC_LENGTH = 300
 """Максимальное количество символов для поля "Описание" модели "Слотов"."""
 
-NAME_MIN_LENGTH = 2
+NAME_MIN_LENGTH = 5
 NAME_MAX_LENGTH = 20
 
 PASSWORD_MIN_LEN = 3
