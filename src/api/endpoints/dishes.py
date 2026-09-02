@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
-from api.validators import check_dish_or_action_exists, check_object_exists
+from api.validators import check_dish_exists, check_object_exists
 from crud import cafe_crud, dish_crud
 from models import Dish
 from schemas.dish import DishCreate, DishInfo, DishUpdate
@@ -46,7 +46,7 @@ async def get_all_dishes(
                 '- для пользователя - только активные блюда\n'
                 '(всегда, в не зависимости от значения параметра).\n'
                 '- для администратора - все блюда (и активные и не активные)\n'
-                '- для менеджера - активные блюда'
+                '- для менеджера - активные блюда\n'
             ),
         ),
     ] = None,
@@ -97,7 +97,7 @@ async def get_dish(
     Для администраторов и менеджеров - все блюда,
     для пользователей - только активные.
     """
-    await check_dish_or_action_exists(dish_id, session, 'Dish')
+    await check_dish_exists(dish_id, session)
 
     conditions = [Dish.id == dish_id]
     if user.role == RoleEnum.USER:
@@ -137,7 +137,7 @@ async def update_dish(
 
     Только для администраторов и менеджеров.
     """
-    dish = await check_dish_or_action_exists(dish_id, session, 'Dish')
+    dish = await check_dish_exists(dish_id, session)
     return await dish_crud.update(
         dish,
         obj_in,

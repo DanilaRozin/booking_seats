@@ -1,4 +1,3 @@
-from models.action import Action
 from models.booking import Booking, BookingTableSlot
 from models.cafe import Cafe
 from models.dish import Dish
@@ -14,5 +13,4 @@ __all__ = [
     'Booking',
     'BookingTableSlot',
     'Dish',
-    'Action',
 ]
