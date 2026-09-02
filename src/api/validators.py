@@ -77,6 +77,27 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
 
 async def check_dish_or_action_exists(
     obj_id: int,
+    session: AsyncSession,
+    obj_type: str,
+) -> object:
+    """Проверка существования в БД объекта."""
+    if obj_type == 'Dish':
+        obj_crud = dish_crud
+    elif obj_type == 'Action':
+        obj_crud = action_crud
+
+    db_object = await obj_crud.get(
+        obj_id,
+        session,
+    )
+    if db_object is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Объект не найден в базе',
+        )
+    return db_object
+
+
 async def check_table_slot_booked(
     cafe_id: int,
     table_id: int,
