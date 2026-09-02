@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 
 from core.constants import NAME_MAX_LENGTH, NAME_MIN_LENGTH
 
-USERNAME_PATTERN = rf'^[A-Za-z0-9]{{{NAME_MIN_LENGTH},{NAME_MAX_LENGTH}}}+(?:_[A-Za-z0-9]+)*$'
+USERNAME_PATTERN = r'^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*$'
 PHONE_PATTERN = r'(?:7|8)\d{10}$'
 
 
@@ -22,8 +22,8 @@ def validate_phone_number(value: str | None) -> str | None:
 
 
 def validate_username(value: str) -> str:
-    """Запрещает одновременное использвоание кириллицы в username."""
-    if NAME_MIN_LENGTH < len(value) < NAME_MAX_LENGTH:
+    """Запрещает использвоание кириллицы в username."""
+    if not NAME_MIN_LENGTH <= len(value) <= NAME_MAX_LENGTH:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(f'username не может быть короче {NAME_MIN_LENGTH} и длиннее {NAME_MAX_LENGTH} символов.'),
