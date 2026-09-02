@@ -4,11 +4,13 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import SmallInteger, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from models.action import action_cafe_table
 from models.dish import dish_cafe_table
 
 from core.base_model import Base
 
 if TYPE_CHECKING:
+    from models.action import Action
     from models.booking import Booking
     from models.dish import Dish
     from models.slots import Slot
@@ -61,12 +63,17 @@ class Cafe(Base):
         lazy='selectin',
         cascade='all, delete-orphan',
     )
-    bookings: Mapped[list['Booking']] = relationship(
-        back_populates='cafe',
-        lazy='selectin',
-    )
     dishes: Mapped[list['Dish']] = relationship(
         back_populates='cafe',
         lazy='selectin',
         secondary=dish_cafe_table,
+    )
+    actions: Mapped[list['Action']] = relationship(
+        back_populates='cafe',
+        lazy='selectin',
+        secondary=action_cafe_table,
+    )
+    bookings: Mapped[list['Booking']] = relationship(
+        back_populates='cafe',
+        lazy='selectin',
     )
