@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator, Callable, Coroutine
 from typing import Annotated, Any, Optional
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi_users import (
     BaseUserManager,
@@ -145,7 +145,18 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
     async def on_after_register(self, user: User, request: Optional[Request] = None) -> None:
         """Логирует успешную регистрацию пользователя."""
-        print(f'Пользователь {user.email} зарегистрирован.')
+        if request is not None:
+            request.state.user = user
+
+    async def on_after_login(
+        self,
+        user: User,
+        request: Optional[Request] = None,
+        response: Optional[Response] = None,
+    ) -> None:
+        """Логирует успешную авторизацию пользователя."""
+        if request is not None:
+            request.state.user = user
 
 
 async def get_user_manager(
@@ -193,6 +204,7 @@ fastapi_users = FastAPIUsers[User, int](get_user_manager, [auth_backend])
 
 # Пользователь
 current_user = fastapi_users.current_user(active=True)
+current_user_optional = fastapi_users.current_user(optional=True)
 
 
 # Менеджер

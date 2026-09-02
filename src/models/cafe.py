@@ -11,6 +11,7 @@ from core.base_model import Base
 
 if TYPE_CHECKING:
     from models.action import Action
+    from models.booking import Booking
     from models.dish import Dish
     from models.slots import Slot
     from models.table import Table
@@ -71,4 +72,7 @@ class Cafe(Base):
         back_populates='cafe',
         lazy='selectin',
         secondary=action_cafe_table,
+    bookings: Mapped[list['Booking']] = relationship(
+        back_populates='cafe',
+        lazy='selectin',
     )

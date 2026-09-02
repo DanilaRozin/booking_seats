@@ -1,5 +1,6 @@
 from api.endpoints.actions import router as action_router
 from api.endpoints.auth import router as auth_router
+from api.endpoints.booking import router as booking_router
 from api.endpoints.cafe import router as cafe_router
 from api.endpoints.dishes import router as dish_router
 from api.endpoints.slots import router as slot_router
@@ -9,6 +10,7 @@ from api.endpoints.user import router as user_router
 __all__ = [
     'user_router',
     'auth_router',
+    'booking_router',
     'cafe_router',
     'table_router',
     'slot_router',

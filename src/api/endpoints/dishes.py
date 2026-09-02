@@ -51,7 +51,7 @@ async def get_all_dishes(
         ),
     ] = None,
     cafe_id: Annotated[
-        int,
+        int | None,
         Query(
             description=(
                 'ID кафе, в котором показывать блюда.Если не задано - показывает все блюда во всех кафе'
