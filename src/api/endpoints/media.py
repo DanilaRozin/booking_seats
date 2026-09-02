@@ -1,10 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from fastapi.responses import FileResponse
 
 from schemas.media import MediaResponse
 from services.media import MediaService
+
+from core.user import current_manager
 
 router = APIRouter()
 
@@ -14,6 +16,7 @@ router = APIRouter()
     response_model=MediaResponse,
     status_code=status.HTTP_201_CREATED,
     summary='Загрузить изображение',
+    dependencies=[Depends(current_manager)],
 )
 async def upload_media(file: UploadFile = File(...)) -> MediaResponse:
     """Принимает файл (JPG/PNG до 5МБ) и сохраняет."""
