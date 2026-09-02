@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
-from api.validators import check_cafe_exists, check_dish_exists
-from crud import dish_crud
+from api.validators import check_dish_or_action_exists, check_object_exists
+from crud import cafe_crud, dish_crud
 from models import Dish
 from schemas.dish import DishCreate, DishInfo, DishUpdate
 
@@ -32,25 +32,21 @@ router = APIRouter()
 @router.get(
     '/',
     summary='Получение списка блюд',
-    tags=['Блюда'],
     response_model=list[DishInfo],
 )
 async def get_all_dishes(
     user: UserDep,
     session: SessionDep,
     show_active: Annotated[
-        bool | None,
+        bool,
         Query(
             description=(
-                """Показывать все блюда, только активные или только не активные.
-
-                По умолчанию показывает:
-
-                - для пользователя - только активные блюда
-                (всегда, в не зависимости от значения параметра).
-                - для администратора - все блюда (и активные и не активные)
-                - для менеджера - активные блюда
-                 """
+                'Показывать все блюда, только активные или только не активные.\n\n'
+                'По умолчанию показывает:\n\n'
+                '- для пользователя - только активные блюда\n'
+                '(всегда, в не зависимости от значения параметра).\n'
+                '- для администратора - все блюда (и активные и не активные)\n'
+                '- для менеджера - активные блюда'
             ),
         ),
     ] = None,
@@ -70,7 +66,7 @@ async def get_all_dishes(
     conditions = []
 
     if cafe_id is not None:
-        await check_cafe_exists(cafe_id, session)
+        await check_object_exists(cafe_crud, cafe_id, session)
         conditions = [Dish.cafe_id == cafe_id]
 
     if (user.role, show_active) in only_active_variants:
@@ -89,7 +85,6 @@ async def get_all_dishes(
 @router.get(
     '/{dish_id}',
     summary='Получение информации о блюде по его ID',
-    tags=['Блюда'],
     response_model=DishInfo,
 )
 async def get_dish(
@@ -102,7 +97,7 @@ async def get_dish(
     Для администраторов и менеджеров - все блюда,
     для пользователей - только активные.
     """
-    await check_dish_exists(dish_id, session)
+    await check_dish_or_action_exists(dish_id, session, 'Dish')
 
     conditions = [Dish.id == dish_id]
     if user.role == RoleEnum.USER:
@@ -113,7 +108,6 @@ async def get_dish(
 @router.post(
     '/',
     response_model=DishInfo,
-    tags=['Блюда'],
     summary='Создание нового блюда',
     dependencies=[Depends(current_manager)],
 )
@@ -131,7 +125,6 @@ async def create_dish(
 @router.patch(
     '/{dish_id}',
     response_model=DishInfo,
-    tags=['Блюда'],
     summary='Обновление информации о блюде по его ID',
     dependencies=[Depends(current_manager)],
 )
@@ -144,7 +137,7 @@ async def update_dish(
 
     Только для администраторов и менеджеров.
     """
-    dish = await check_dish_exists(dish_id, session)
+    dish = await check_dish_or_action_exists(dish_id, session, 'Dish')
     return await dish_crud.update(
         dish,
         obj_in,

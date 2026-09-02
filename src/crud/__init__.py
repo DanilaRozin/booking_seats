@@ -1,3 +1,4 @@
+from crud.action import action_crud
 from crud.cafe import cafe_crud
 from crud.dish import dish_crud
 from crud.slots import slot_crud
@@ -8,4 +9,5 @@ __all__ = [
     'table_crud',
     'dish_crud',
     'slot_crud',
+    'action_crud',
 ]

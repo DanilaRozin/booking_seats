@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from crud import cafe_crud, dish_crud
+from crud import action_crud, cafe_crud, dish_crud
 from crud.base import CRUDBase
 from models import User
 from schemas.user import UserCreate
@@ -73,21 +73,27 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
         )
 
 
-async def check_dish_exists(
-    dish_id: int,
+async def check_dish_or_action_exists(
+    obj_id: int,
     session: AsyncSession,
+    obj_type: str,
 ) -> object:
-    """Проверка существования в БД блюда."""
-    db_dish = await dish_crud.get(
-        dish_id,
+    """Проверка существования в БД объекта."""
+    if obj_type == 'Dish':
+        obj_crud = dish_crud
+    elif obj_type == 'Action':
+        obj_crud = action_crud
+
+    db_object = await obj_crud.get(
+        obj_id,
         session,
     )
-    if db_dish is None:
+    if db_object is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Блюдо не найдено в базе',
+            detail='Объект не найден в базе',
         )
-    return db_dish
+    return db_object
 
 
 def existing_image(photo_id: UUID) -> None:

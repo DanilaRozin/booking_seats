@@ -1,3 +1,4 @@
+from models.action import Action
 from models.cafe import Cafe
 from models.dish import Dish
 from models.slots import Slot
@@ -10,4 +11,5 @@ __all__ = [
     'Table',
     'Slot',
     'Dish',
+    'Action',
 ]
