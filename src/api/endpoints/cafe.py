@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.validators import (
     check_name_duplicate,
     check_object_exists,
+    ensure_can_deactivate,
     existing_image,
     validate_managers_id,
 )
@@ -153,7 +154,7 @@ async def partial_update_cafe(
             Cafe.id == user.cafe_id,
         )
     db_cafe = await check_object_exists(cafe_crud, cafe_id, session)
-
+    ensure_can_deactivate(obj_in, user)
     if obj_in.name is not None:
         await check_name_duplicate(obj_in.name, session)
 

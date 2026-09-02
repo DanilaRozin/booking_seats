@@ -11,7 +11,8 @@ from crud import cafe_crud, dish_crud, slot_crud, table_crud
 from crud.base import CRUDBase
 from models import Booking, BookingTableSlot, Slot, Table, User
 from schemas.booking import BookingCreate, BookingUpdate
-from schemas.user import UserCreate
+from schemas.cafe import CafeUpdate
+from schemas.user import UserAdminUpdate, UserCreate
 from services.media import MediaService
 
 from core.base_model import Base
@@ -257,3 +258,24 @@ async def validate_managers_id(
         )
 
     return list(db_managers)
+
+
+def ensure_can_deactivate(
+    obj_in: UserAdminUpdate | CafeUpdate,
+    user: User,
+    user_id: int = None,
+) -> None:
+    """Запрещает деактивацию всем, кроме суперюзера.
+
+    Предназначена для использования в patch запросах к юзерам и кафе.
+    """
+    if obj_in.is_active is False and (not user.role.ADMIN or not user.is_superuser):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для деактивации.',
+        )
+    if obj_in.is_active is False and user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя деактивировать самого себя.',
+        )

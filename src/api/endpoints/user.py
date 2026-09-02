@@ -5,13 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep
-from api.validators import check_object_exists, existing_user
+from api.validators import check_object_exists, ensure_can_deactivate, existing_user
 from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
 from tasks.booking_notifications.email_notifications import notify_registration
 
-from core.user import UserManager, current_manager, current_user, ensure_can_deactivate, get_user_manager
+from core.user import UserManager, current_manager, current_user, get_user_manager
 
 router = APIRouter()
 
