@@ -72,6 +72,7 @@ class Cafe(Base):
         back_populates='cafe',
         lazy='selectin',
         secondary=action_cafe_table,
+    )
     bookings: Mapped[list['Booking']] = relationship(
         back_populates='cafe',
         lazy='selectin',
