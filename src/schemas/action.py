@@ -31,12 +31,8 @@ class ActionCreate(ActionBase):
 class ActionInfo(ActionBase, BaseSchema):
     """Схема представления из базы данных объектов модели 'Акции'."""
 
-    id: int | None = Field(default=None, title='Id')
+    id: int = Field(default=None, title='Id')
     cafes: list[CafeShortInfo] | None = Field(default=None, title='Cafes')
-    photo_id: UUID | None = Field(
-        default=None,
-        title='Photo Id',
-    )
     is_active: bool | None = Field(default=None, title='Is Active')
     created_at: datetime | None = Field(default=None, title='Created At')
     updated_at: datetime | None = Field(default=None, title='Updated At')
