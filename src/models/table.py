@@ -7,6 +7,7 @@ from core.base_model import Base
 from core.constants import TABLE_DESC_LENGTH
 
 if TYPE_CHECKING:
+    from models.booking import BookingTableSlot
     from models.cafe import Cafe
 
 
@@ -30,5 +31,10 @@ class Table(Base):
     )
     cafe: Mapped['Cafe'] = relationship(
         back_populates='tables',
+        lazy='selectin',
+    )
+
+    booking_table_slots: Mapped[list['BookingTableSlot']] = relationship(
+        back_populates='table',
         lazy='selectin',
     )

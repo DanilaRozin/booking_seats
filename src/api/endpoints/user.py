@@ -9,6 +9,7 @@ from api.validators import check_object_exists, ensure_can_change_role, ensure_c
 from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
+from tasks.booking_notifications.email_notifications import notify_registration
 
 from core.user import UserManager, current_manager_without_cafe, current_user, get_user_manager
 
@@ -43,6 +44,12 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.reason,
         )
+
+    notify_registration.delay(
+        user_id=user.id,
+        username=user.username,
+        user_email=user.email,
+    )
     return user
 
 
@@ -98,7 +105,7 @@ async def get_user_info_by_id(
     user_id: int,
 ) -> User:
     """Возвращает данные пользователя по id (для менеджеров и админов)."""
-    return await user_crud.get(obj_id=user_id, session=session)
+    return await check_object_exists(user_crud, user_id, session)
 
 
 @router.patch(
@@ -106,6 +113,7 @@ async def get_user_info_by_id(
     response_model=UserInfo,
 )
 async def update_user_info(
+    session: SessionDep,
     obj_in: UserAdminUpdate,
     user_id: int,
     request: Request,

@@ -1,9 +1,24 @@
-from fastapi import Request, Response
+import json
+from typing import AsyncIterator, Optional
+
+from fastapi import Depends, Request, Response
+from loguru import logger
+from starlette.middleware.base import RequestResponseEndpoint
+
+from models.user import User
 
 from core.logging_config import contextualize_user
+from core.user import current_user_optional
+
+SENSITIVE_FIELDS = {'password'}
 
 
-async def logging_context_middleware(
+def mask_sensitive(data: dict) -> dict:
+    """Заменяет значения чувствительных полей на '***' перед логированием."""
+    return {key: ('***' if key.lower() in SENSITIVE_FIELDS else value) for key, value in data.items()}
+
+
+async def logging_context_dependency(
     request: Request,
     user: Optional[User] = Depends(current_user_optional),
 ) -> AsyncIterator[None]:
@@ -48,5 +63,6 @@ async def request_logging_middleware(request: Request, call_next: RequestRespons
         user_id=user_id,
         username=user_username,
     ):
-        request.state.user = user
-        return await call_next(request)
+        logger.info(line)
+
+    return response

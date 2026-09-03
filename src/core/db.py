@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from core.settings import settings
 
 async_engine = create_async_engine(
-    url=settings.db_url,
+    url=settings.postgres.url,
     pool_pre_ping=True,
 )
 

@@ -12,6 +12,8 @@ from core.constants import SLOT_DESC_LENGTH
 if TYPE_CHECKING:
     from cafe import Cafe
 
+    from models.booking import BookingTableSlot
+
 
 class Slot(Base):
     """Модель временных слотов."""
@@ -27,6 +29,10 @@ class Slot(Base):
     )
     cafe: Mapped['Cafe'] = relationship(
         back_populates='slots',
+        lazy='selectin',
+    )
+    booking_table_slots: Mapped[list['BookingTableSlot']] = relationship(
+        back_populates='slot',
         lazy='selectin',
     )
 

@@ -2,10 +2,10 @@ from contextlib import asynccontextmanager  # Ruff
 from typing import AsyncGenerator
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
 from api.routers import main_router, tags
-from middleware.logging_context import logging_context_middleware
+from middleware.logging_context import logging_context_dependency, request_logging_middleware
 
 from core.exception_handlers import register_exception_handlers
 from core.logging_config import configure_logging
@@ -25,6 +25,7 @@ app = FastAPI(
     version=settings.version,
     description=settings.description,
     openapi_tags=tags.tag_list,
+    dependencies=[Depends(logging_context_dependency)],
 )
 register_exception_handlers(app)
 
@@ -36,7 +37,7 @@ configure_logging(
     retention=10,
 )
 
-app.middleware('http')(logging_context_middleware)
+app.middleware('http')(request_logging_middleware)
 
 
 @app.get('/', response_model=dict)
