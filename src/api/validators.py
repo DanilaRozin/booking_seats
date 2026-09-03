@@ -3,7 +3,6 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel
-from schemas.booking import BookingCreate, BookingUpdate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
@@ -11,6 +10,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from crud import action_crud, cafe_crud, dish_crud, slot_crud, table_crud
 from crud.base import CRUDBase
 from models import Booking, BookingTableSlot, Slot, Table, User
+from schemas.booking import BookingCreate, BookingUpdate
 from schemas.user import UserCreate
 from services.media import MediaService
 

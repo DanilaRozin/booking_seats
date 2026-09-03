@@ -9,6 +9,7 @@ from core.base_model import Base
 if TYPE_CHECKING:
     from models.cafe import Cafe
 
+
 dish_cafe_table = Table(
     'dish_cafe_table',
     Base.metadata,
