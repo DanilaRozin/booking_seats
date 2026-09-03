@@ -1,5 +1,5 @@
 import re
-from datetime import time
+from datetime import date, time
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -60,3 +60,13 @@ def validate_time_pair(
 
 
 # /////////////////////////////////////////////////////////////////////////////////////
+
+
+def validate_booking_date(value: date) -> None:
+    """Проверка даты бронирования."""
+    if value < date.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=('Нельзя забронировать стол задним числом.'),
+        )
+    return value

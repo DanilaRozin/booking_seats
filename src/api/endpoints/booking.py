@@ -1,15 +1,16 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from api import SessionDep, UserDep
 from api.validators import check_object_exists, validate_booking_create, validate_booking_update
 from crud import booking_crud
-from models import Booking
+from models import Booking, User
 from schemas.booking import BookingCreate, BookingInfo, BookingUpdate
 
 from core.constants import RoleEnum
+from core.user import current_user
 
 router = APIRouter()
 
@@ -59,7 +60,7 @@ async def get_all_bookings(
 )
 async def create_booking(
     booking_in: BookingCreate,
-    user: UserDep,
+    user: Annotated[User, Depends(current_user)],
     session: SessionDep,
 ) -> Booking:
     """Создает новоe бронированиe.
