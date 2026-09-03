@@ -42,6 +42,8 @@ class UserShortInfo(UserBase):
 
     id: int
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UserUpdate(schemas.CreateUpdateDictModel):
     """Схема для обновления."""

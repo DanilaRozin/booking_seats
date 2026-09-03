@@ -62,7 +62,7 @@ async def create_booking(
     booking_in: BookingCreate,
     user: UserDep,
     session: SessionDep,
-) -> Booking:
+) -> BookingInfo:
     """Создает новоe бронированиe.
 
     *Только для авторизованных пользователей.*
@@ -74,7 +74,8 @@ async def create_booking(
         user_id=user.id,
     )
     notify_booking_handler(created_booking, new_fl=True)
-    return created_booking
+
+    return await booking_crud.get_full_booking(session, created_booking.id)
 
 
 @router.get(
