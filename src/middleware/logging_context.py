@@ -23,11 +23,15 @@ async def logging_context_dependency(
     user: Optional[User] = Depends(current_user_optional),
 ) -> AsyncIterator[None]:
     """Зависимость для подстановки пользователя в логи."""
-    request.state.user = user
+    user_id = user.id if user else None
+    username = user.username if user else None
+
+    request.state.user_id = user_id
+    request.state.user_username = username
 
     with contextualize_user(
-        user_id=user.id if user else None,
-        username=user.username if user else None,
+        user_id=user_id,
+        username=username,
     ):
         yield
 
@@ -45,8 +49,8 @@ async def request_logging_middleware(request: Request, call_next: RequestRespons
             body_log = None
 
     response = await call_next(request)
-
-    user = getattr(request.state, 'user', None)
+    user_id = getattr(request.state, 'user_id', None)
+    user_username = getattr(request.state, 'user_username', None)
     extra_message = getattr(request.state, 'log_message', None)
 
     line = f'{request.method} {request.url.path} -> {response.status_code}'
@@ -56,8 +60,8 @@ async def request_logging_middleware(request: Request, call_next: RequestRespons
         line = f'{line} | {extra_message}'
 
     with contextualize_user(
-        user_id=user.id if user else None,
-        username=user.username if user else None,
+        user_id=user_id,
+        username=user_username,
     ):
         logger.info(line)
 

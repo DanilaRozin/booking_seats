@@ -4,13 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
-from api.validators import check_dish_exists, check_object_exists
+from api.validators import check_dish_or_action_exists, check_object_exists
 from crud import cafe_crud, dish_crud
 from models import Dish
 from schemas.dish import DishCreate, DishInfo, DishUpdate
 
 from core.constants import RoleEnum
-from core.user import current_manager
+from core.user import current_manager_without_cafe
 
 only_active_variants = [
     (RoleEnum.MANAGER, True),
@@ -97,7 +97,7 @@ async def get_dish(
     Для администраторов и менеджеров - все блюда,
     для пользователей - только активные.
     """
-    await check_dish_exists(dish_id, session)
+    await check_dish_or_action_exists(dish_id, session, 'Dish')
 
     conditions = [Dish.id == dish_id]
     if user.role == RoleEnum.USER:
@@ -109,7 +109,7 @@ async def get_dish(
     '/',
     response_model=DishInfo,
     summary='Создание нового блюда',
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def create_dish(
     dish_schema: DishCreate,
@@ -126,7 +126,7 @@ async def create_dish(
     '/{dish_id}',
     response_model=DishInfo,
     summary='Обновление информации о блюде по его ID',
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def update_dish(
     dish_id: Annotated[int, Path(description='ID блюда', gt=0)],
@@ -137,7 +137,7 @@ async def update_dish(
 
     Только для администраторов и менеджеров.
     """
-    dish = await check_dish_exists(dish_id, session)
+    dish = await check_dish_or_action_exists(dish_id, session, 'Dish')
     return await dish_crud.update(
         dish,
         obj_in,

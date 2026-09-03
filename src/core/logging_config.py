@@ -11,7 +11,7 @@ SYSTEM_USER_ID = '-1'
 LOG_FORMAT = (
     '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | '
     '<level>{level: <8}</level> | '
-    'user=<cyan>{extra[username]}</cyan>:<cyan>{extra[user_id]}</cyan> | '
+    '<cyan>{extra[username]}</cyan>:<cyan>{extra[user_id]}</cyan> | '
     '{message}'
 )
 

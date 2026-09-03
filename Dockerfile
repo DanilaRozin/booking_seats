@@ -12,6 +12,11 @@ ARG GROUP_ID=1000
 RUN groupadd -g ${GROUP_ID} devuser \
     && useradd -u ${USER_ID} -g devuser -m -s /bin/bash devuser
 
+WORKDIR /app
+
+RUN mkdir -p /app/uploads /app/logs \
+    && chown -R ${USER_ID}:${GROUP_ID} /app
+
 USER devuser
 
 # Задаём переменные окружения.
@@ -28,8 +33,6 @@ ENV UV_PYTHON="python3.12" \
   UV_LINK_MODE=copy \
   UV_COMPILE_BYTECODE=1 \
   PYTHONOPTIMIZE=1
-
-WORKDIR /app
 
 COPY --chown=$USER_ID:$GROUP_ID pyproject.toml uv.lock entrypoint.sh /app/
 
