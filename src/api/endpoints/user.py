@@ -11,7 +11,7 @@ from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
 from tasks.booking_notifications.email_notifications import notify_registration
 
-from core.user import UserManager, current_manager, current_user, get_user_manager
+from core.user import UserManager, current_manager_without_cafe, current_user, get_user_manager
 
 router = APIRouter()
 
@@ -56,7 +56,7 @@ async def register(
 @router.get(
     '',
     response_model=list[UserInfo],
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
     summary='Посмотреть список всех пользователей',
 )
 async def get_list_user_info(
@@ -98,7 +98,7 @@ async def update_me_info(
 @router.get(
     '/{user_id}',
     response_model=UserInfo,
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def get_user_info_by_id(
     session: SessionDep,
@@ -117,7 +117,7 @@ async def update_user_info(
     obj_in: UserAdminUpdate,
     user_id: int,
     request: Request,
-    user: User = Depends(current_manager),
+    user: User = Depends(current_manager_without_cafe),
     user_manager: UserManager = Depends(get_user_manager),
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
