@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
-from api.validators import check_dish_or_action_exists, check_object_exists
+from api.validators import check_object_exists
 from crud import action_crud, cafe_crud
 from models import Action
 from schemas.action import ActionCreate, ActionInfo, ActionUpdate
@@ -97,7 +97,7 @@ async def get_action(
     Для администраторов и менеджеров - все,
     для пользователей - только активные.
     """
-    await check_dish_or_action_exists(action_id, session, 'Action')
+    await check_object_exists(action_crud, action_id, session)
 
     conditions = [Action.id == action_id]
     if user.role == RoleEnum.USER:
@@ -137,7 +137,7 @@ async def update_action(
 
     Только для администраторов и менеджеров.
     """
-    action = await check_dish_or_action_exists(action_id, session, 'Action')
+    action = await check_object_exists(action_crud, action_id, session)
     return await action_crud.update(
         action,
         obj_in,
