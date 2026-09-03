@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User
-from schemas.user import UserAdminUpdate, UserCreate
+from schemas.user import UserCreate
 from schemas.validators import validate_phone_number
 
 from .constants import PASSWORD_MIN_LEN, RoleEnum
@@ -177,25 +177,13 @@ def require_role(*allowed_roles: RoleEnum) -> Callable[[User], Coroutine[Any, An
     return dependency
 
 
-def ensure_can_deactivate(obj_in: UserAdminUpdate, user: User) -> None:
-    """Запрещает деактивацию всем, кроме суперюзера.
-
-    Предназначена для использования в patch запросах к юзерам и кафе.
-    """
-    if obj_in.is_active is False and not user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='У вас недостаточно прав для деакцтивации.',
-        )
-
-
 fastapi_users = FastAPIUsers[User, int](get_user_manager, [auth_backend])
 
 # Пользователь
 current_user = fastapi_users.current_user(active=True)
 
 
-# Менеджер
+# Менеджер с кафе
 async def current_manager(
     cafe_id: int | None = None,
     user: User = Depends(require_role(RoleEnum.MANAGER, RoleEnum.ADMIN)),
@@ -221,6 +209,8 @@ async def current_manager(
     return user
 
 
+# Менеджер
+current_manager_without_cafe = require_role(RoleEnum.MANAGER, RoleEnum.ADMIN)
 # Администратор
 current_admin = require_role(RoleEnum.ADMIN)
 

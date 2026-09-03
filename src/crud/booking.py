@@ -1,8 +1,12 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from crud.base import CRUDBase
 from models import Booking, BookingTableSlot
-from schemas.booking import BookingCreate, BookingUpdate
+from schemas.booking import BookingCreate, BookingInfo, BookingTableSlotShortInfo, BookingUpdate
+from schemas.cafe import CafeShortInfo
+from schemas.user import UserShortInfo
 
 
 class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
@@ -80,6 +84,37 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         session.add(db_obj)
         await session.commit()
         return db_obj
+
+    async def get_full_booking(self, session: AsyncSession, booking_id: int) -> Booking | None:
+        """Получает полное бронирование со всеми связями."""
+        stmt = (
+            select(Booking)
+            .where(Booking.id == booking_id)
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.cafe),
+                selectinload(Booking.tables_slots).joinedload(BookingTableSlot.table),
+                selectinload(Booking.tables_slots).joinedload(BookingTableSlot.slot),
+            )
+        )
+
+        result = await session.execute(stmt)
+        booking_obj = result.scalar_one_or_none()
+        return BookingInfo(
+            id=booking_obj.id,
+            user=UserShortInfo.model_validate(booking_obj.user),
+            cafe=CafeShortInfo.model_validate(booking_obj.cafe),
+            tables_slots=[
+                BookingTableSlotShortInfo.model_validate(slot) for slot in booking_obj.tables_slots
+            ],
+            guest_number=booking_obj.guest_number,
+            note=booking_obj.note,
+            status=booking_obj.status,
+            booking_date=booking_obj.booking_date,
+            is_active=booking_obj.is_active,
+            created_at=booking_obj.created_at,
+            updated_at=booking_obj.updated_at,
+        )
 
 
 booking_crud = CRUDBooking(Booking)

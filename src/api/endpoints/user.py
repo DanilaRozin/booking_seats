@@ -5,12 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep
-from api.validators import existing_user
+from api.validators import check_object_exists, ensure_can_change_role, ensure_can_deactivate, existing_user
 from crud.user import user_crud
 from models import User
 from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
 
-from core.user import UserManager, current_manager, current_user, ensure_can_deactivate, get_user_manager
+from core.user import UserManager, current_manager_without_cafe, current_user, get_user_manager
 
 router = APIRouter()
 
@@ -49,7 +49,7 @@ async def register(
 @router.get(
     '',
     response_model=list[UserInfo],
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
     summary='Посмотреть список всех пользователей',
 )
 async def get_list_user_info(
@@ -91,7 +91,7 @@ async def update_me_info(
 @router.get(
     '/{user_id}',
     response_model=UserInfo,
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def get_user_info_by_id(
     session: SessionDep,
@@ -109,10 +109,11 @@ async def update_user_info(
     obj_in: UserAdminUpdate,
     user_id: int,
     request: Request,
-    user: User = Depends(current_manager),
+    user: User = Depends(current_manager_without_cafe),
     user_manager: UserManager = Depends(get_user_manager),
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
-    ensure_can_deactivate(obj_in, user)
-    user_obj = await user_manager.get(user_id)
+    user_obj = await check_object_exists(user_crud, user_id, session)
+    ensure_can_deactivate(obj_in, user, user_id)
+    ensure_can_change_role(obj_in, user, user_id)
     return await user_manager.update(obj_in, user_obj, request=request)

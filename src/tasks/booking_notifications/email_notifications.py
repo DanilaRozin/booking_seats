@@ -1,5 +1,6 @@
 """Задачи с E-mail уведомлений."""
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -14,9 +15,10 @@ from core.logging_config import contextualize_user
 from core.settings import settings
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from models.booking import Booking
 
-TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'tasks' / 'templates'
+TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'templates'
+NOTIFY_FOR_SECONDS = 60 * 60 * 3
 
 
 @celery_app.task(
@@ -50,12 +52,81 @@ def notify_registration(
             text=body_text_msg,
             service_name=service_name,
         )
-        _send_email(
-            to_addr=user_email,
-            subject=subject_msg,
-            body_text=body_text_msg,
-            body_html=body_html_msg,
+        logger.debug('Начинаю отправку email через SMTP')
+        try:
+            _send_email(
+                to_addr=user_email,
+                subject=subject_msg,
+                body_text=body_text_msg,
+                body_html=body_html_msg,
+            )
+        except Exception as err:
+            logger.error(
+                'Ошибка отправки email | to={email} | error={error}',
+                email=user_email,
+                error=err,
+            )
+            raise
+
+        logger.info('Email успешно отправлен | to={email}', email=user_email)
+
+
+def notify_booking_handler(booking: 'Booking', new_fl: bool) -> None:
+    """Обрабатывает логику уведомлений о бронировании.
+
+    Args:
+        booking (Booking): Объект брони.
+        new_fl (bool): Новая бронь. True, если новая.
+
+    """
+    start_time = min([x.slot.start_time for x in booking.tables_slots])
+    date_booking = booking.booking_date.strftime('%d.%m.%Y')
+    start_time_booking_msg = start_time.strftime('%H:%M')
+    notify_client_booking.delay(
+        user_id=booking.user_id,
+        username=booking.user.username,
+        user_email=booking.user.email,
+        cafe_name=booking.cafe.name,
+        cafe_address=booking.cafe.address,
+        cafe_phone=booking.cafe.phone,
+        date_booking=date_booking,
+        start_time_booking=start_time_booking_msg,
+        number_of_guests=booking.guest_number,
+        action='Бронь подтверждена',
+    )
+    for manager in booking.cafe.managers:
+        notify_manager_booking.delay(
+            user_id=booking.user_id,
+            username=booking.user.username,
+            user_email=booking.user.email,
+            user_phone=booking.user.phone,
+            manager_cafe_email=manager.email,
+            cafe_name=booking.cafe.name,
+            number_of_guests=booking.guest_number,
+            date_booking=date_booking,
+            start_time_booking=start_time_booking_msg,
+            booking_id=booking.id,
+            new_booking_fl=new_fl,
         )
+    target_td = datetime.combine(booking.booking_date, start_time, tzinfo=timezone.utc)
+    notify_dt = target_td - timedelta(seconds=NOTIFY_FOR_SECONDS)
+    if datetime.now(timezone.utc) > notify_dt:
+        return
+    notify_client_booking.apply_async(
+        eta=notify_dt,
+        kwargs={
+            'user_id': booking.user_id,
+            'username': booking.user.username,
+            'user_email': booking.user.email,
+            'cafe_name': booking.cafe.name,
+            'cafe_address': booking.cafe.address,
+            'cafe_phone': booking.cafe.phone,
+            'date_booking': date_booking,
+            'start_time_booking': start_time_booking_msg,
+            'number_of_guests': booking.guest_number,
+            'action': 'Напоминание о бронировании',
+        },
+    )
 
 
 @celery_app.task(
@@ -71,10 +142,10 @@ def notify_client_booking(
     cafe_name: str,
     cafe_address: str,
     cafe_phone: str,
-    table_descriptions: list[str],
-    datetime_start_booking: 'datetime',
-    datetime_finish_booking: 'datetime',
-    upcomming_fl: bool,
+    number_of_guests: int,
+    date_booking: str,
+    start_time_booking: str,
+    action: str,
     service_name: str = settings.title,
 ) -> None:
     """Уведомляет клиента о бронировании через Celery задачу.
@@ -87,11 +158,11 @@ def notify_client_booking(
         cafe_name (str): Название кафе.
         cafe_address (str): Адрес кафе.
         cafe_phone (str): Телефон кафе.
-        table_descriptions (list[str]): Описания столов.
-        datetime_start_booking (datetime): ДатаВремя начала брони.
-        datetime_finish_booking (datetime): ДатаВремя конец брони.
+        number_of_guests: (int): Число гостей.
+        date_booking (str): Дата брони.
+        start_time_booking (str): Время начало брони.
         service_name (str): Название сервиса.
-        upcomming_fl (bool): Флаг напоминания. True, если это напоминание.
+        action (str): Название дейставия.
 
     """
     with contextualize_user(username=username, user_id=user_id):
@@ -101,23 +172,13 @@ def notify_client_booking(
             cafe=cafe_name,
         )
         html = (TEMPLATES_DIR / 'booking_confirmation.html').read_text(encoding='utf-8')
-        start_booking = datetime_start_booking.strftime('%d.%m.%Y %H:%M')
-        finish_booking = datetime_finish_booking.strftime('%d.%m.%Y %H:%M')
-        table_descriptions_for_msg = '\n - '.join(table_descriptions)
-        table_descriptions_html = ''.join(
-            f'<li>{table_description}</li>' for table_description in table_descriptions
-        )
-        if upcomming_fl:
-            action = 'Напоминание о бронировании.'
-        else:
-            action = 'Бронь подтверждена.'
         subject_msg = f'{service_name}: {action}'
         body_text_msg = (
             f'{action}.\n'
             f'Кафе: {cafe_name}\n'
-            f'Столы:\n - {table_descriptions_for_msg}\n'
-            f'Начало: {start_booking}\n'
-            f'Конец: {finish_booking}\n'
+            f'Кол-во человек:\n - {number_of_guests}\n'
+            f'Дата: {date_booking}\n'
+            f'Начало: {start_time_booking}\n'
             f'Адрес кафе: {cafe_address}\n'
             f'Телефон кафе: {cafe_phone}\n'
         )
@@ -128,9 +189,9 @@ def notify_client_booking(
             cafe_name=cafe_name,
             cafe_address=cafe_address,
             cafe_phone=cafe_phone,
-            table_descriptions=table_descriptions_html,
-            start_booking=start_booking,
-            finish_booking=finish_booking,
+            number_of_guests=number_of_guests,
+            date_booking=date_booking,
+            start_time_booking=start_time_booking,
         )
         _send_email(
             to_addr=user_email,
@@ -153,9 +214,9 @@ def notify_manager_booking(
     user_phone: str,
     manager_cafe_email: str,
     cafe_name: str,
-    table_descriptions: list[str],
-    datetime_start_booking: 'datetime',
-    datetime_finish_booking: 'datetime',
+    number_of_guests: int,
+    date_booking: str,
+    start_time_booking: str,
     booking_id: int,
     new_booking_fl: bool,
 ) -> None:
@@ -169,9 +230,9 @@ def notify_manager_booking(
         user_phone (str): Телефон пользователя.
         manager_cafe_email (str): E-mail администратора кафе.
         cafe_name (str): Название кафе.
-        table_descriptions (list[str]): Описания столов.
-        datetime_start_booking (datetime): ДатаВремя начала брони.
-        datetime_finish_booking (datetime): ДатаВремя конец брони.
+        number_of_guests: (int): Число гостей.
+        date_booking (str): Дата брони.
+        start_time_booking (str): Время начало брони.
         booking_id (int): ID брони.
         new_booking_fl (bool): Флаг новой брони. True, если бронь новая.
 
@@ -183,9 +244,6 @@ def notify_manager_booking(
             cafe=cafe_name,
         )
         subject_msg = f'{cafe_name}: Бронь. ID: {booking_id}'
-        start_booking = datetime_start_booking.strftime('%d.%m.%Y %H:%M')
-        finish_booking = datetime_finish_booking.strftime('%d.%m.%Y %H:%M')
-        table_descriptions_for_msg = '\n - '.join(table_descriptions)
         if new_booking_fl:
             body_text_msg = 'Новая бронь:'
         else:
@@ -196,9 +254,9 @@ def notify_manager_booking(
             f'E-mail клиента: {user_email}\n'
             f'Телефон клиента: {user_phone}\n'
             f'ID брони: {booking_id}\n'
-            f'Столы:\n - {table_descriptions_for_msg}\n'
-            f'Начало: {start_booking}\n'
-            f'Конец: {finish_booking}\n'
+            f'Кол-во человек:\n - {number_of_guests}\n'
+            f'Дата: {date_booking}\n'
+            f'Начало: {start_time_booking}\n'
         )
         _send_email(
             to_addr=manager_cafe_email,

@@ -8,6 +8,8 @@ from schemas.user import UserCreate
 
 from core.settings import settings
 
+SMTP_CONNECT_TIMEOUT = 10
+
 TEMPLATES_DIR = Path(__file__).parent / 'templates'
 
 
@@ -29,6 +31,14 @@ async def send_email(to: str, subject: str, body_text: str, body_html: str) -> N
     message.set_content(body_text)
     message.add_alternative(body_html, subtype='html')
 
+    with smtplib.SMTP(
+        settings.smtp.host,
+        settings.smtp.port,
+        timeout=SMTP_CONNECT_TIMEOUT,
+    ) as server:
+        server.starttls()
+        server.login(settings.smtp.login, settings.smtp.password.get_secret_value())
+        server.send_message(message)
     await aiosmtplib.send(
         message,
         hostname=settings.smtp_host,
