@@ -254,6 +254,7 @@ def existing_image(photo_id: UUID) -> None:
 async def validate_managers_id(
     managers_id: list[int],
     session: AsyncSession,
+    cafe_id: int | None = None,
 ) -> list[int]:
     """Проверка на валидность списка менеджеров."""
     stmt = select(User).where(
@@ -268,7 +269,7 @@ async def validate_managers_id(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f'Нельзя назначить несуществующих менеджеров {list(bad_managers)}',
         )
-    is_not_free = [user.id for user in db_managers if user.cafe_id is not None]
+    is_not_free = [user.id for user in db_managers if (user.cafe_id != cafe_id and user.cafe_id is not None)]
     if is_not_free:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
