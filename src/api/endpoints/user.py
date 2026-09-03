@@ -1,19 +1,31 @@
 from collections.abc import Sequence
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import exceptions
 
-from api import SessionDep
+from api import SessionDep, UserDep
 from api.validators import check_object_exists, ensure_can_change_role, ensure_can_deactivate, existing_user
 from crud.user import user_crud
 from models import User
-from schemas.user import UserAdminUpdate, UserCreate, UserInfo, UserUpdate
+from schemas.user import UserCreate, UserInfo, UserUpdate
 from tasks.booking_notifications.email_notifications import notify_registration
 
-from core.user import UserManager, current_manager_without_cafe, current_user, get_user_manager
+from core.user import UserManager, current_manager_without_cafe, get_user_manager
 
 router = APIRouter()
+
+
+@router.get(
+    '',
+    response_model=list[UserInfo],
+    dependencies=[Depends(current_manager_without_cafe)],
+    summary='Посмотреть список всех пользователей',
+)
+async def get_list_user_info(
+    session: SessionDep,
+) -> Sequence[User]:
+    """Возращает список состоящий из всех пользователей."""
+    return await user_crud.get_multi(session)
 
 
 # Регистрация пользователя
@@ -54,19 +66,6 @@ async def register(
 
 
 @router.get(
-    '',
-    response_model=list[UserInfo],
-    dependencies=[Depends(current_manager_without_cafe)],
-    summary='Посмотреть список всех пользователей',
-)
-async def get_list_user_info(
-    session: SessionDep,
-) -> Sequence[User]:
-    """Возращает список состоящий из всех пользователей."""
-    return await user_crud.get_multi(session)
-
-
-@router.get(
     '/me',
     response_model=UserInfo,
     response_model_exclude_none=True,
@@ -74,7 +73,7 @@ async def get_list_user_info(
 )
 async def get_me_info(
     session: SessionDep,
-    user: Annotated[User, Depends(current_user)],
+    user: UserDep,
 ) -> User:
     """Возращает информацию о пользователе."""
     return await user_crud.get(obj_id=user.id, session=session)
@@ -87,11 +86,12 @@ async def get_me_info(
 )
 async def update_me_info(
     obj_in: UserUpdate,
-    user: Annotated[User, Depends(current_user)],
+    user: UserDep,
     user_manager: UserManager = Depends(get_user_manager),
     request: Request = None,
 ) -> User:
     """Обновляет данные текущего пользователя."""
+    ensure_can_change_role(obj_in, user)
     return await user_manager.update(obj_in, user, safe=True, request=request)
 
 
@@ -114,7 +114,7 @@ async def get_user_info_by_id(
 )
 async def update_user_info(
     session: SessionDep,
-    obj_in: UserAdminUpdate,
+    obj_in: UserUpdate,
     user_id: int,
     request: Request,
     user: User = Depends(current_manager_without_cafe),
