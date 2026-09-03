@@ -297,7 +297,11 @@ def ensure_can_deactivate(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Нельзя деактивировать самого себя.',
         )
-    if obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER] and (not user.role.ADMIN or not user.is_superuser):
+    if (
+        obj_in is UserAdminUpdate
+        and obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER]
+        and (not user.role.ADMIN or not user.is_superuser)
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='У вас недостаточно прав для выдачи роли.',
