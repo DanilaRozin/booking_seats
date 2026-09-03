@@ -196,7 +196,7 @@ current_user_optional = fastapi_users.current_user(optional=True)
 
 
 # Менеджер с кафе
-async def current_manager_without_cafe(
+async def current_manager(
     cafe_id: int | None = None,
     user: User = Depends(require_role(RoleEnum.MANAGER, RoleEnum.ADMIN)),
 ) -> User:
