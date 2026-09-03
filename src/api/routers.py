@@ -61,10 +61,10 @@ main_router.include_router(
     action_router,
     prefix='/actions',
     tags=[tags.add_tag('Акции', 'Управление акциями')],
-  
+)
+
 main_router.include_router(
     media_router,
     prefix='/media',
     tags=[tags.add_tag('Медиа', 'Загрузка и получение медиафайлов')],
-
 )
