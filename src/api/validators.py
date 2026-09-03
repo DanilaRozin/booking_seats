@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -76,6 +76,16 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
         )
 
 
+def check_slot_not_started(slot: Slot, booking_date: date) -> None:
+    """Проверяет, что слот на указанную дату ещё не начался."""
+    slot_datetime = datetime.combine(booking_date, slot.start_time)
+    if slot_datetime <= datetime.now():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Слот {slot.start_time.strftime("%H:%M")} на {booking_date} уже начался или прошёл.',
+        )
+
+
 async def check_table_slot_booked(
     cafe_id: int,
     table_id: int,
@@ -138,13 +148,13 @@ async def validate_booking_create(booking_create: BookingCreate, session: AsyncS
             Table.cafe_id == booking_create.cafe_id,
         )
 
-        await check_object_exists(
+        slot = await check_object_exists(
             slot_crud,
             table_slot.slot_id,
             session,
             Slot.cafe_id == booking_create.cafe_id,
         )
-
+        check_slot_not_started(slot, booking_create.booking_date)
         await check_table_slot_booked(
             cafe_id=booking_create.cafe_id,
             table_id=table_slot.table_id,
@@ -194,6 +204,14 @@ async def validate_booking_update(
             session,
             Slot.cafe_id == booking.cafe_id,
         )
+        slot = await check_object_exists(
+            slot_crud,
+            table_slot.slot_id,
+            session,
+            Slot.cafe_id == booking.cafe_id,
+        )
+
+        check_slot_not_started(slot, booking_date)
 
         await check_table_slot_booked(
             cafe_id=booking.cafe_id,
