@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from schemas.user import TokenResponse, UserLogin
+from schemas.user import AuthData, AuthToken
 
 from core.db import get_session
 from core.user import UserManager, auth_backend, get_user_manager
@@ -17,10 +17,10 @@ router = APIRouter()
 @router.post(
     '/login',
     summary='Получение токена авторизации',
-    response_model=TokenResponse,
+    response_model=AuthToken,
 )
 async def login(
-    credentials: UserLogin,
+    credentials: AuthData,
     user_manager: UserManager = Depends(get_user_manager),
 ) -> Response:
     """Аутентифицирует пользователя по email и паролю, возвращает JWT-токен.

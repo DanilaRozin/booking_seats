@@ -12,7 +12,7 @@ from crud.base import CRUDBase
 from models import Booking, BookingTableSlot, Slot, Table, User
 from schemas.booking import BookingCreate, BookingUpdate
 from schemas.cafe import CafeUpdate
-from schemas.user import UserAdminUpdate, UserCreate
+from schemas.user import UserCreate, UserUpdate
 from services.media import MediaService
 
 from core.base_model import Base
@@ -254,6 +254,7 @@ def existing_image(photo_id: UUID) -> None:
 async def validate_managers_id(
     managers_id: list[int],
     session: AsyncSession,
+    cafe_id: int | None = None,
 ) -> list[int]:
     """Проверка на валидность списка менеджеров."""
     stmt = select(User).where(
@@ -268,7 +269,7 @@ async def validate_managers_id(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f'Нельзя назначить несуществующих менеджеров {list(bad_managers)}',
         )
-    is_not_free = [user.id for user in db_managers if user.cafe_id is not None]
+    is_not_free = [user.id for user in db_managers if (user.cafe_id != cafe_id and user.cafe_id is not None)]
     if is_not_free:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -279,7 +280,7 @@ async def validate_managers_id(
 
 
 def ensure_can_deactivate(
-    obj_in: UserAdminUpdate | CafeUpdate,
+    obj_in: UserUpdate | CafeUpdate,
     user: User,
     user_id: int = None,
 ) -> None:
@@ -298,7 +299,7 @@ def ensure_can_deactivate(
             detail='Нельзя деактивировать самого себя.',
         )
     if (
-        obj_in is UserAdminUpdate
+        obj_in is UserUpdate
         and obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER]
         and (not user.role.ADMIN or not user.is_superuser)
     ):
@@ -309,9 +310,9 @@ def ensure_can_deactivate(
 
 
 def ensure_can_change_role(
-    obj_in: UserAdminUpdate | CafeUpdate,
+    obj_in: UserUpdate,
     user: User,
-    user_id: int = None,
+    user_id: int | None = None,
 ) -> None:
     """Запрещает менять ротль всем, кроме суперюзера и админа."""
     if obj_in.role and user_id == user.id:
