@@ -12,7 +12,7 @@ from crud.base import CRUDBase
 from models import Booking, BookingTableSlot, Slot, Table, User
 from schemas.booking import BookingCreate, BookingUpdate
 from schemas.cafe import CafeUpdate
-from schemas.user import UserAdminUpdate, UserCreate
+from schemas.user import UserCreate, UserUpdate
 from services.media import MediaService
 
 from core.base_model import Base
@@ -280,7 +280,7 @@ async def validate_managers_id(
 
 
 def ensure_can_deactivate(
-    obj_in: UserAdminUpdate | CafeUpdate,
+    obj_in: UserUpdate | CafeUpdate,
     user: User,
     user_id: int = None,
 ) -> None:
@@ -299,7 +299,7 @@ def ensure_can_deactivate(
             detail='Нельзя деактивировать самого себя.',
         )
     if (
-        obj_in is UserAdminUpdate
+        obj_in is UserUpdate
         and obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER]
         and (not user.role.ADMIN or not user.is_superuser)
     ):
@@ -310,9 +310,9 @@ def ensure_can_deactivate(
 
 
 def ensure_can_change_role(
-    obj_in: UserAdminUpdate | CafeUpdate,
+    obj_in: UserUpdate,
     user: User,
-    user_id: int = None,
+    user_id: int | None = None,
 ) -> None:
     """Запрещает менять ротль всем, кроме суперюзера и админа."""
     if obj_in.role and user_id == user.id:
