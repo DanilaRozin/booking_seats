@@ -13,10 +13,12 @@ class DishBase(BaseModel):
     name: str | None = Field(
         default=None,
         title='Name',
+        max_length=40,
     )
     description: str | None = Field(
         default=None,
         title='Description',
+        max_length=300,
     )
     photo_id: UUID | None = Field(
         default=None,
@@ -30,7 +32,7 @@ class DishBase(BaseModel):
 class DishCreate(DishBase):
     """Схема тела запроса на создание объекта 'Блюд'."""
 
-    name: str = Field(title='Name')
+    name: str = Field(title='Name', max_length=40)
     price: float = Field(title='Price')
 
 

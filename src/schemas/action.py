@@ -13,6 +13,7 @@ class ActionBase(BaseModel):
     description: str | None = Field(
         default=None,
         title='Description',
+        max_length=300,
     )
     photo_id: UUID | None = Field(
         default=None,
@@ -24,7 +25,7 @@ class ActionCreate(ActionBase):
     """Схема тела запроса на создание объекта 'Акции'."""
 
     cafes_id: list[int] = Field(title='Cafes Id')
-    description: str = Field(title='Description')
+    description: str = Field(title='Description', max_length=300)
     photo_id: UUID = Field(title='Photo Id')
 
 
