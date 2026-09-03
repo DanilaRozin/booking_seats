@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from crud import cafe_crud, dish_crud, slot_crud, table_crud
+from crud import action_crud, cafe_crud, dish_crud, slot_crud, table_crud
 from crud.base import CRUDBase
 from models import Booking, BookingTableSlot, Slot, Table, User
 from schemas.booking import BookingCreate, BookingUpdate
@@ -76,6 +76,29 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
         )
 
 
+async def check_dish_or_action_exists(
+    obj_id: int,
+    session: AsyncSession,
+    obj_type: str,
+) -> object:
+    """Проверка существования в БД объекта."""
+    if obj_type == 'Dish':
+        obj_crud = dish_crud
+    elif obj_type == 'Action':
+        obj_crud = action_crud
+
+    db_object = await obj_crud.get(
+        obj_id,
+        session,
+    )
+    if db_object is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Объект не найден в базе',
+        )
+    return db_object
+
+
 def check_slot_not_started(slot: Slot, booking_date: date) -> None:
     """Проверяет, что слот на указанную дату ещё не начался."""
     slot_datetime = datetime.combine(booking_date, slot.start_time)
@@ -108,10 +131,8 @@ async def check_table_slot_booked(
         ),
         Booking.is_active.is_(True),
     ]
-
     if booking_id is not None:
         conditions.append(Booking.id != booking_id)
-
     booked = await session.execute(
         select(BookingTableSlot.id)
         .join(
@@ -120,7 +141,6 @@ async def check_table_slot_booked(
         )
         .where(*conditions),
     )
-
     if booked.scalars().first() is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -131,15 +151,12 @@ async def check_table_slot_booked(
 async def validate_booking_create(booking_create: BookingCreate, session: AsyncSession) -> None:
     """Проверяет данные для создания бронирования."""
     await check_object_exists(cafe_crud, booking_create.cafe_id, session)
-
     table_slot_pairs = [(item.table_id, item.slot_id) for item in booking_create.tables_slots]
-
     if len(table_slot_pairs) != len(set(table_slot_pairs)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='В бронировании указаны повторяющиеся пары стол-слот',
         )
-
     for table_slot in booking_create.tables_slots:
         await check_object_exists(
             table_crud,
@@ -172,24 +189,19 @@ async def validate_booking_update(
     """Проверяет данные для обновления бронирования."""
     if booking_update.tables_slots is None and booking_update.booking_date is None:
         return
-
     booking_date = (
         booking_update.booking_date if booking_update.booking_date is not None else booking.booking_date
     )
-
     table_slots = (
         booking_update.tables_slots if booking_update.tables_slots is not None else booking.tables_slots
     )
-
     if booking_update.tables_slots is not None:
         table_slot_pairs = [(item.table_id, item.slot_id) for item in booking_update.tables_slots]
-
         if len(table_slot_pairs) != len(set(table_slot_pairs)):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='В бронировании указаны повторяющиеся пары стол-слот',
             )
-
     for table_slot in table_slots:
         await check_object_exists(
             table_crud,
@@ -197,7 +209,6 @@ async def validate_booking_update(
             session,
             Table.cafe_id == booking.cafe_id,
         )
-
         await check_object_exists(
             slot_crud,
             table_slot.slot_id,
@@ -221,23 +232,6 @@ async def validate_booking_update(
             session=session,
             booking_id=booking.id,
         )
-
-
-async def check_dish_exists(
-    dish_id: int,
-    session: AsyncSession,
-) -> object:
-    """Проверка существования в БД блюда."""
-    db_dish = await dish_crud.get(
-        dish_id,
-        session,
-    )
-    if db_dish is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Блюдо не найдено в базе',
-        )
-    return db_dish
 
 
 def existing_image(photo_id: UUID) -> None:
