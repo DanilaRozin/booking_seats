@@ -71,7 +71,7 @@ def notify_registration(
         logger.info('Email успешно отправлен | to={email}', email=user_email)
 
 
-def notify_booking_handler(booking: Booking, new_fl: bool) -> None:
+def notify_booking_handler(booking: 'Booking', new_fl: bool) -> None:
     """Обрабатывает логику уведомлений о бронировании.
 
     Args:
