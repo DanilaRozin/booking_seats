@@ -8,6 +8,7 @@ from api.validators import check_object_exists, validate_booking_create, validat
 from crud import booking_crud
 from models import Booking, User
 from schemas.booking import BookingCreate, BookingInfo, BookingUpdate
+from tasks.booking_notifications.email_notifications import notify_booking_handler
 
 from core.constants import RoleEnum
 from core.user import current_user
@@ -68,13 +69,14 @@ async def create_booking(
     *Только для авторизованных пользователей.*
     """
     await validate_booking_create(booking_in, session)
-    new_booking = await booking_crud.create(
+    created_booking = await booking_crud.create(
         obj_in=booking_in,
         session=session,
         user_id=user.id,
     )
+    notify_booking_handler(created_booking, new_fl=True)
 
-    return await booking_crud.get_full_booking(session, new_booking.id)
+    return await booking_crud.get_full_booking(session, created_booking.id)
 
 
 @router.get(
@@ -141,4 +143,6 @@ async def update_booking(
         )
 
     await validate_booking_update(booking, booking_in, session)
-    return await booking_crud.update(booking, booking_in, session)
+    changed_booking = await booking_crud.update(booking, booking_in, session)
+    notify_booking_handler(changed_booking, new_fl=False)
+    return changed_booking

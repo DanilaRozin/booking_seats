@@ -3,6 +3,8 @@ name: booking_seats
 volumes:
   pgdata:
   rabbitmq_data:
+  uploads:
+  logs:
 
 services:
 
@@ -59,6 +61,9 @@ services:
     build: ..
     env_file:
       - .env
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
     ports:
       - 8000:8000
     depends_on:
@@ -75,6 +80,9 @@ services:
       - .env
     entrypoint: []
     command: celery -A core.celery_app worker --loglevel=info
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
     depends_on:
       rabbitmq:
         condition: service_healthy

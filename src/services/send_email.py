@@ -4,6 +4,8 @@ from email.utils import formatdate, make_msgid
 
 from core.settings import settings
 
+SMTP_CONNECT_TIMEOUT = 10
+
 
 def _send_email(
     to_addr: str,
@@ -31,7 +33,11 @@ def _send_email(
     if body_html is not None:
         message.add_alternative(body_html, subtype='html')
 
-    with smtplib.SMTP(settings.smtp.host, settings.smtp.port) as server:
+    with smtplib.SMTP(
+        settings.smtp.host,
+        settings.smtp.port,
+        timeout=SMTP_CONNECT_TIMEOUT,
+    ) as server:
         server.starttls()
         server.login(settings.smtp.login, settings.smtp.password.get_secret_value())
         server.send_message(message)
