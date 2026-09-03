@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -11,7 +11,8 @@ from crud import cafe_crud, dish_crud, slot_crud, table_crud
 from crud.base import CRUDBase
 from models import Booking, BookingTableSlot, Slot, Table, User
 from schemas.booking import BookingCreate, BookingUpdate
-from schemas.user import UserCreate
+from schemas.cafe import CafeUpdate
+from schemas.user import UserAdminUpdate, UserCreate
 from services.media import MediaService
 
 from core.base_model import Base
@@ -72,6 +73,16 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Указанный username занят.',
+        )
+
+
+def check_slot_not_started(slot: Slot, booking_date: date) -> None:
+    """Проверяет, что слот на указанную дату ещё не начался."""
+    slot_datetime = datetime.combine(booking_date, slot.start_time)
+    if slot_datetime <= datetime.now():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Слот {slot.start_time.strftime("%H:%M")} на {booking_date} уже начался или прошёл.',
         )
 
 
@@ -137,13 +148,13 @@ async def validate_booking_create(booking_create: BookingCreate, session: AsyncS
             Table.cafe_id == booking_create.cafe_id,
         )
 
-        await check_object_exists(
+        slot = await check_object_exists(
             slot_crud,
             table_slot.slot_id,
             session,
             Slot.cafe_id == booking_create.cafe_id,
         )
-
+        check_slot_not_started(slot, booking_create.booking_date)
         await check_table_slot_booked(
             cafe_id=booking_create.cafe_id,
             table_id=table_slot.table_id,
@@ -193,6 +204,14 @@ async def validate_booking_update(
             session,
             Slot.cafe_id == booking.cafe_id,
         )
+        slot = await check_object_exists(
+            slot_crud,
+            table_slot.slot_id,
+            session,
+            Slot.cafe_id == booking.cafe_id,
+        )
+
+        check_slot_not_started(slot, booking_date)
 
         await check_table_slot_booked(
             cafe_id=booking.cafe_id,
@@ -257,3 +276,51 @@ async def validate_managers_id(
         )
 
     return list(db_managers)
+
+
+def ensure_can_deactivate(
+    obj_in: UserAdminUpdate | CafeUpdate,
+    user: User,
+    user_id: int = None,
+) -> None:
+    """Запрещает деактивацию всем, кроме суперюзера.
+
+    Предназначена для использования в patch запросах к юзерам и кафе.
+    """
+    if obj_in.is_active is False and (not user.role.ADMIN or not user.is_superuser):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для деактивации.',
+        )
+    if obj_in.is_active is False and user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя деактивировать самого себя.',
+        )
+    if (
+        obj_in is UserAdminUpdate
+        and obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER]
+        and (not user.role.ADMIN or not user.is_superuser)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для выдачи роли.',
+        )
+
+
+def ensure_can_change_role(
+    obj_in: UserAdminUpdate | CafeUpdate,
+    user: User,
+    user_id: int = None,
+) -> None:
+    """Запрещает менять ротль всем, кроме суперюзера и админа."""
+    if obj_in.role and user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя сменить роль самому себе.',
+        )
+    if obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER] and (not user.role.ADMIN or not user.is_superuser):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для изменения роли.',
+        )

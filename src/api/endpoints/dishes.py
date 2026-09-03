@@ -10,7 +10,7 @@ from models import Dish
 from schemas.dish import DishCreate, DishInfo, DishUpdate
 
 from core.constants import RoleEnum
-from core.user import current_manager
+from core.user import current_manager_without_cafe
 
 only_active_variants = [
     (RoleEnum.MANAGER, True),
@@ -109,7 +109,7 @@ async def get_dish(
     '/',
     response_model=DishInfo,
     summary='Создание нового блюда',
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def create_dish(
     dish_schema: DishCreate,
@@ -126,7 +126,7 @@ async def create_dish(
     '/{dish_id}',
     response_model=DishInfo,
     summary='Обновление информации о блюде по его ID',
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def update_dish(
     dish_id: Annotated[int, Path(description='ID блюда', gt=0)],
