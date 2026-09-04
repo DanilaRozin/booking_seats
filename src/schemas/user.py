@@ -54,6 +54,7 @@ class UserUpdate(schemas.CreateUpdateDictModel):
     email: EmailStr | None = None
     phone: str | None = None
     tg_id: str | None = None
+    role: RoleEnum | None = None
     password: SecretStr | None = None
     is_active: bool | None = None
 
@@ -61,21 +62,14 @@ class UserUpdate(schemas.CreateUpdateDictModel):
     _validate_username = field_validator('username')(validate_username)
 
 
-class UserAdminUpdate(UserUpdate):
-    """Схема для обновления пользователя Администратором."""
-
-    role: RoleEnum | None = None
-    managed_id: int | None = None
-
-
-class UserLogin(BaseModel):
+class AuthData(BaseModel):
     """Схема для логина."""
 
     login: EmailStr | str
     password: SecretStr
 
 
-class TokenResponse(BaseModel):
+class AuthToken(BaseModel):
     """Схема JWT-токена авторизации."""
 
     access_token: str

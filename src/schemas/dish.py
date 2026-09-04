@@ -38,17 +38,40 @@ class DishCreate(DishBase):
 class DishInfo(DishBase, BaseSchema):
     """Схема представления из базы данных объектов модели 'Блюда'."""
 
-    id: int | None = Field(default=None, title='Id')
-    cafes: list[CafeShortInfo] | None = Field(default=None, title='Cafes')
-    is_active: bool | None = Field(default=None, title='Is Active')
-    created_at: datetime | None = Field(default=None, title='Created At')
-    updated_at: datetime | None = Field(default=None, title='Updated At')
+    id: int | None = Field(
+        default=None,
+        title='Id',
+    )
+    cafes: list[CafeShortInfo] | None = Field(
+        default=None,
+        title='Cafes',
+    )
+    is_active: bool | None = Field(
+        default=None,
+        title='Is Active',
+    )
+    price: float | None = Field(
+        default=None,
+        title='Price',
+    )
+    created_at: datetime | None = Field(
+        default=None,
+        title='Created At',
+    )
+    updated_at: datetime | None = Field(
+        default=None,
+        title='Updated At',
+    )
     model_config = ConfigDict(from_attributes=True)
 
 
 class DishUpdate(DishBase):
     """Схема тела запроса на изменение объекта 'Блюд'."""
 
+    price: float | None = Field(
+        default=None,
+        title='Price',
+    )
     is_active: bool | None = Field(
         default=None,
         title='Is Active',

@@ -43,6 +43,7 @@ def notify_registration(
         service_name (str): Название сервиса.
 
     """
+    logger.debug('notify_registration запущен')
     with contextualize_user(username=username, user_id=user_id):
         logger.info('Отправка notify_registration | to={email}', email=user_email)
         html = (TEMPLATES_DIR / 'registration.html').read_text(encoding='utf-8')
@@ -219,6 +220,7 @@ def notify_manager_booking(
     start_time_booking: str,
     booking_id: int,
     new_booking_fl: bool,
+    service_name: str = settings.title,
 ) -> None:
     """Уведомляет менеджера о бронировании через Celery задачу.
 
@@ -234,10 +236,12 @@ def notify_manager_booking(
         date_booking (str): Дата брони.
         start_time_booking (str): Время начало брони.
         booking_id (int): ID брони.
+        service_name (str): Название сервиса.
         new_booking_fl (bool): Флаг новой брони. True, если бронь новая.
 
     """
     with contextualize_user(username=username, user_id=user_id):
+        html = (TEMPLATES_DIR / 'manager_notyfication.html').read_text(encoding='utf-8')
         logger.info(
             'Отправка notify_manager_booking | to={email} | cafe={cafe}',
             email=manager_cafe_email,
@@ -249,17 +253,29 @@ def notify_manager_booking(
         else:
             body_text_msg = 'Изменение брони:'
         body_text_msg += (
+            f'ID брони: {booking_id}\n'
             f'\nКафе: {cafe_name}\n'
             f'Клиент: {username}\n'
             f'E-mail клиента: {user_email}\n'
             f'Телефон клиента: {user_phone}\n'
-            f'ID брони: {booking_id}\n'
-            f'Кол-во человек:\n - {number_of_guests}\n'
+            f'Кол-во человек: {number_of_guests}\n'
             f'Дата: {date_booking}\n'
             f'Начало: {start_time_booking}\n'
+        )
+        body_html_msg = html.format(
+            service_name=service_name,
+            username=username,
+            cafe_name=cafe_name,
+            user_phone=user_phone,
+            user_email=user_email,
+            booking_id=booking_id,
+            number_of_guests=number_of_guests,
+            date_booking=date_booking,
+            start_time_booking=start_time_booking,
         )
         _send_email(
             to_addr=manager_cafe_email,
             subject=subject_msg,
             body_text=body_text_msg,
+            body_html=body_html_msg,
         )
