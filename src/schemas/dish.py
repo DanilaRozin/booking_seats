@@ -13,16 +13,19 @@ class DishBase(BaseModel):
     name: str | None = Field(
         default=None,
         title='Name',
+        max_length=40,
     )
     description: str | None = Field(
         default=None,
         title='Description',
+        max_length=300,
     )
     photo_id: UUID | None = Field(
         default=None,
         title='Photo Id',
     )
-    price: float = Field(
+    price: float | None = Field(
+        default=None,
         title='Price',
     )
 
@@ -30,7 +33,8 @@ class DishBase(BaseModel):
 class DishCreate(DishBase):
     """Схема тела запроса на создание объекта 'Блюд'."""
 
-    name: str = Field(title='Name')
+    cafes_id: list[int] = Field(title='Cafes Id')
+    name: str = Field(title='Name', max_length=40)
     price: float = Field(title='Price')
 
 
@@ -67,6 +71,7 @@ class DishInfo(DishBase, BaseSchema):
 class DishUpdate(DishBase):
     """Схема тела запроса на изменение объекта 'Блюд'."""
 
+    cafes_id: list[int] | None = Field(default=None, title='Cafes Id')
     price: float | None = Field(
         default=None,
         title='Price',

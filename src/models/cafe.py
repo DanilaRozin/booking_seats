@@ -68,12 +68,12 @@ class Cafe(Base):
         lazy='selectin',
     )
     dishes: Mapped[list['Dish']] = relationship(
-        back_populates='cafe',
+        back_populates='cafes',
         lazy='selectin',
         secondary=dish_cafe_table,
     )
     actions: Mapped[list['Action']] = relationship(
-        back_populates='cafe',
+        back_populates='cafes',
         lazy='selectin',
         secondary=action_cafe_table,
     )

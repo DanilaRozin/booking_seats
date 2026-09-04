@@ -4,13 +4,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api import SessionDep, UserDep
-from api.validators import check_dish_or_action_exists, check_object_exists
+from api.validators import check_object_exists
 from crud import action_crud, cafe_crud
 from models import Action
 from schemas.action import ActionCreate, ActionInfo, ActionUpdate
+from services.media import MediaService
 
 from core.constants import RoleEnum
-from core.user import current_manager
+from core.user import current_manager_without_cafe
 
 only_active_variants = [
     (RoleEnum.MANAGER, True),
@@ -72,7 +73,7 @@ async def get_all_actions(
     if (user.role, show_active) in only_active_variants:
         show_active = True
     elif (user.role, show_active) in all_actions_variants:
-        show_active = False
+        pass
 
     if show_active is not None:
         conditions.append(Action.is_active.is_(show_active))
@@ -97,7 +98,7 @@ async def get_action(
     Для администраторов и менеджеров - все,
     для пользователей - только активные.
     """
-    await check_dish_or_action_exists(action_id, session, 'Action')
+    await check_object_exists(action_crud, action_id, session)
 
     conditions = [Action.id == action_id]
     if user.role == RoleEnum.USER:
@@ -109,13 +110,15 @@ async def get_action(
     '/',
     response_model=ActionInfo,
     summary='Создание новой акции',
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def create_action(
     action_schema: ActionCreate,
     session: SessionDep,
 ) -> Action:
     """Создает новую акцию. Только для администраторов и менеджеров."""
+    if action_schema.photo_id:
+        MediaService.get_image_path(action_schema.photo_id)
     return await action_crud.create(
         action_schema,
         session,
@@ -126,7 +129,7 @@ async def create_action(
     '/{action_id}',
     response_model=ActionInfo,
     summary='Обновление информации об акции по ее ID',
-    dependencies=[Depends(current_manager)],
+    dependencies=[Depends(current_manager_without_cafe)],
 )
 async def update_action(
     action_id: Annotated[int, Path(description='ID акции', gt=0)],
@@ -137,7 +140,9 @@ async def update_action(
 
     Только для администраторов и менеджеров.
     """
-    action = await check_dish_or_action_exists(action_id, session, 'Action')
+    action = await check_object_exists(action_crud, action_id, session)
+    if obj_in.photo_id:
+        MediaService.get_image_path(obj_in.photo_id)
     return await action_crud.update(
         action,
         obj_in,
