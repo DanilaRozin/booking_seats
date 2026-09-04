@@ -26,14 +26,14 @@ class Dish(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String)
-    photo_id: Mapped[uuid.UUID] = mapped_column(Uuid, default=uuid.uuid4)
+    photo_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=True, default=None)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
         server_default='true',
     )
-    cafe: Mapped[list['Cafe']] = relationship(
+    cafes: Mapped[list['Cafe']] = relationship(
         secondary=dish_cafe_table,
         back_populates='dishes',
         lazy='selectin',

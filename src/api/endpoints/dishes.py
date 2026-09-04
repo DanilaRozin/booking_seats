@@ -8,6 +8,7 @@ from api.validators import check_object_exists
 from crud import cafe_crud, dish_crud
 from models import Dish
 from schemas.dish import DishCreate, DishInfo, DishUpdate
+from services.media import MediaService
 
 from core.constants import RoleEnum
 from core.user import current_manager_without_cafe
@@ -72,7 +73,7 @@ async def get_all_dishes(
     if (user.role, show_active) in only_active_variants:
         show_active = True
     elif (user.role, show_active) in all_dishes_variants:
-        show_active = False
+        pass
 
     if show_active is not None:
         conditions.append(Dish.is_active.is_(show_active))
@@ -116,6 +117,8 @@ async def create_dish(
     session: SessionDep,
 ) -> Dish:
     """Создает новое блюда. Только для администраторов и менеджеров."""
+    if dish_schema.photo_id:
+        MediaService.get_image_path(dish_schema.photo_id)
     return await dish_crud.create(
         dish_schema,
         session,
@@ -138,6 +141,8 @@ async def update_dish(
     Только для администраторов и менеджеров.
     """
     dish = await check_object_exists(dish_crud, dish_id, session)
+    if obj_in.photo_id:
+        MediaService.get_image_path(obj_in.photo_id)
     return await dish_crud.update(
         dish,
         obj_in,

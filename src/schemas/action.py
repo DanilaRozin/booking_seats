@@ -26,7 +26,10 @@ class ActionCreate(ActionBase):
 
     cafes_id: list[int] = Field(title='Cafes Id')
     description: str = Field(title='Description', max_length=300)
-    photo_id: UUID = Field(title='Photo Id')
+    photo_id: UUID | None = Field(
+        default=None,
+        title='Photo Id',
+    )
 
 
 class ActionInfo(ActionBase, BaseSchema):
@@ -43,6 +46,7 @@ class ActionInfo(ActionBase, BaseSchema):
 class ActionUpdate(ActionBase):
     """Схема тела запроса на изменение объекта 'Акции'."""
 
+    cafes_id: list[int] = Field(title='Cafes Id')
     is_active: bool | None = Field(
         default=None,
         title='Is Active',
