@@ -24,7 +24,8 @@ class DishBase(BaseModel):
         default=None,
         title='Photo Id',
     )
-    price: float = Field(
+    price: float | None = Field(
+        default=None,
         title='Price',
     )
 
