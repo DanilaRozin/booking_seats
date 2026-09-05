@@ -3,6 +3,9 @@ from typing import AsyncGenerator
 
 import uvicorn
 from fastapi import Depends, FastAPI
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from redis import asyncio as aioredis
 
 from api.routers import main_router, tags
 from middleware.logging_context import logging_context_dependency, request_logging_middleware
@@ -16,14 +19,18 @@ from core.settings import settings
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     """Жизненный цикл приложения FastAPI."""
     # TODO: Добавить код, выполняемый при старте приложения
+    redis = aioredis.from_url(settings.redis.fastapi_cache_url)
+    FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
     yield
     # TODO: Добавить код, выполняемый при остановке приложения
+    await redis.close()
 
 
 app = FastAPI(
     title=settings.title,
     version=settings.version,
     description=settings.description,
+    lifespan=lifespan,
     openapi_tags=tags.tag_list,
     dependencies=[Depends(logging_context_dependency)],
 )

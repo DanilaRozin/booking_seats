@@ -52,11 +52,20 @@ class RedisConfig(BaseSettings):
     host: str
     port: int
     db_celery_backend: int
+    db_cache: int
+    password: SecretStr | None = None
 
     @property
     def celery_backend_url(self) -> str:
         """Конкатенирует URL Celery backend."""
-        return f'redis://{self.host}:{self.port}/{self.db_celery_backend}'
+        auth = f':{self.password.get_secret_value()}@' if self.password else ''
+        return f'redis://{auth}{self.host}:{self.port}/{self.db_celery_backend}'
+
+    @property
+    def fastapi_cache_url(self) -> str:
+        """Конкатенирует URL Celery backend."""
+        auth = f':{self.password.get_secret_value()}@' if self.password else ''
+        return f'redis://{auth}{self.host}:{self.port}/{self.db_cache}'
 
 
 class SMTPConfig(BaseSettings):
@@ -98,7 +107,13 @@ class Settings(BaseSettings):
     # Общие настройки
     title: str = 'Booking Seats'
     version: str = '0.0.1'
-    description: str = 'Основа для приложения'
+    description: str = (
+        'Сервис бронирования мест в кафе: управление пользователями, '
+        'кафе, столами, слотами, блюдами и акциями. '
+        'Асинхронный REST API на FastAPI с фоновой рассылкой уведомлений '
+        'через Celery + RabbitMQ, кэшированием на Redis и хранением данных '
+        'в PostgreSQL.'
+    )
 
     # Настройки для FastAPI users
     secret: SecretStr

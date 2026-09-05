@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
+from zoneinfo import ZoneInfo
 
 from celery import Task
 from loguru import logger
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'templates'
 NOTIFY_FOR_SECONDS = 60 * 60 * 3
+MOSCOW_TIMEZONE = 'Europe/Moscow'
 
 
 @celery_app.task(
@@ -109,8 +111,13 @@ def notify_booking_handler(booking: 'Booking', new_fl: bool) -> None:
             booking_id=booking.id,
             new_booking_fl=new_fl,
         )
-    target_td = datetime.combine(booking.booking_date, start_time, tzinfo=timezone.utc)
-    notify_dt = target_td - timedelta(seconds=NOTIFY_FOR_SECONDS)
+    local_td = datetime.combine(
+        booking.booking_date,
+        start_time,
+        tzinfo=ZoneInfo(MOSCOW_TIMEZONE),  # timezone нужно прикреплять к кафе или адресу.
+    )
+    target_td_utc = local_td.astimezone(timezone.utc)
+    notify_dt = target_td_utc - timedelta(seconds=NOTIFY_FOR_SECONDS)
     if datetime.now(timezone.utc) > notify_dt:
         return
     notify_client_booking.apply_async(

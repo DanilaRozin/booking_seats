@@ -1,7 +1,9 @@
 from collections.abc import Sequence
-from typing import Annotated
+from typing import Annotated, Any, Callable
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Request, Response
+from fastapi_cache import FastAPICache
+from fastapi_cache.decorator import cache
 
 from api import SessionDep, UserDep
 from api.validators import check_dish_or_action_exists, check_object_exists
@@ -11,6 +13,8 @@ from schemas.action import ActionCreate, ActionInfo, ActionUpdate
 
 from core.constants import RoleEnum
 from core.user import current_manager
+
+ACTIONS_CACHE_SECONDS = 60
 
 only_active_variants = [
     (RoleEnum.MANAGER, True),
@@ -29,10 +33,46 @@ all_actions_variants = [
 router = APIRouter()
 
 
+def user_aware_key_builder(
+    func: Callable[..., Any],
+    namespace: str = '',
+    *,
+    request: Request | None = None,
+    response: Response | None = None,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> str:
+    """Генерирует cache-ключ.
+
+    Args:
+        func (Callable[..., Any]): Декорируемая функция-обработчик (endpoint).
+        namespace (str): Пространство имен кэша (задается в декораторе @cache).
+        request (Request | None): Объект HTTP-запроса FastAPI.
+        response (Response | None): Объект HTTP-ответа FastAPI.
+        args (tuple[Any, ...]): Позиционные аргументы, переданные в функцию.
+        kwargs (dict[str, Any]): Именованные аргументы, переданные в функцию.
+
+    Returns:
+        str: Уникальный строковый ключ для хранения результата в кэше.
+
+    """
+    user = kwargs.get('user')
+    show_active = kwargs.get('show_active')
+    cafe_id = kwargs.get('cafe_id')
+    prefix = FastAPICache.get_prefix()
+    user_id = user.id if user else 'anon'
+    return f'{prefix}:{namespace}:{func.__name__}:cafe_{cafe_id}:active_{show_active}:user_{user_id}'
+
+
 @router.get(
     '/',
     summary='Получение списка акций',
     response_model=list[ActionInfo],
+)
+@cache(
+    expire=ACTIONS_CACHE_SECONDS,
+    namespace='get_all_actions',
+    key_builder=user_aware_key_builder,
 )
 async def get_all_actions(
     user: UserDep,
@@ -116,10 +156,12 @@ async def create_action(
     session: SessionDep,
 ) -> Action:
     """Создает новую акцию. Только для администраторов и менеджеров."""
-    return await action_crud.create(
+    created_action = await action_crud.create(
         action_schema,
         session,
     )
+    await FastAPICache.clear(namespace='get_all_actions')
+    return created_action
 
 
 @router.patch(
@@ -138,6 +180,7 @@ async def update_action(
     Только для администраторов и менеджеров.
     """
     action = await check_dish_or_action_exists(action_id, session, 'Action')
+    await FastAPICache.clear(namespace='get_all_actions')
     return await action_crud.update(
         action,
         obj_in,

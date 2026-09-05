@@ -1,7 +1,9 @@
 from collections.abc import Sequence
-from typing import Annotated
+from typing import Annotated, Any, Callable
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Request, Response
+from fastapi_cache import FastAPICache
+from fastapi_cache.decorator import cache
 
 from api import SessionDep, UserDep
 from api.validators import check_dish_or_action_exists, check_object_exists
@@ -11,6 +13,8 @@ from schemas.dish import DishCreate, DishInfo, DishUpdate
 
 from core.constants import RoleEnum
 from core.user import current_manager_without_cafe
+
+DISHES_CACHE_SECONDS = 60
 
 only_active_variants = [
     (RoleEnum.MANAGER, True),
@@ -29,10 +33,47 @@ all_dishes_variants = [
 router = APIRouter()
 
 
+def user_aware_key_builder(
+    func: Callable[..., Any],
+    namespace: str = '',
+    *,
+    request: Request | None = None,
+    response: Response | None = None,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> str:
+    """Генерирует cache-ключ.
+
+    Args:
+        func (Callable[..., Any]): Декорируемая функция-обработчик (endpoint).
+        namespace (str = ''): Пространство имен кэша (задается в декораторе @cache).
+        request (Request | None): Объект HTTP-запроса FastAPI.
+        response (Response | None): Объект HTTP-ответа FastAPI.
+        args (tuple[Any, ...]): Позиционные аргументы, переданные в функцию.
+        kwargs (dict[str, Any]): Именованные аргументы, переданные в функцию
+            (включая зависимости user, session и query-параметры).
+
+    Returns:
+        str: Уникальный строковый ключ для хранения результата в кэше.
+
+    """
+    user = kwargs.get('user')
+    show_active = kwargs.get('show_active')
+    cafe_id = kwargs.get('cafe_id')
+    prefix = FastAPICache.get_prefix()
+    user_id = user.id if user else 'anon'
+    return f'{prefix}:{namespace}:{func.__name__}:cafe_{cafe_id}:active_{show_active}:user_{user_id}'
+
+
 @router.get(
     '/',
     summary='Получение списка блюд',
     response_model=list[DishInfo],
+)
+@cache(
+    expire=DISHES_CACHE_SECONDS,
+    namespace='get_all_dishes',
+    key_builder=user_aware_key_builder,
 )
 async def get_all_dishes(
     user: UserDep,
@@ -116,10 +157,12 @@ async def create_dish(
     session: SessionDep,
 ) -> Dish:
     """Создает новое блюда. Только для администраторов и менеджеров."""
-    return await dish_crud.create(
+    created_dish = await dish_crud.create(
         dish_schema,
         session,
     )
+    await FastAPICache.clear(namespace='get_all_dishes')
+    return created_dish
 
 
 @router.patch(
@@ -138,6 +181,7 @@ async def update_dish(
     Только для администраторов и менеджеров.
     """
     dish = await check_dish_or_action_exists(dish_id, session, 'Dish')
+    await FastAPICache.clear(namespace='get_all_dishes')
     return await dish_crud.update(
         dish,
         obj_in,

@@ -27,9 +27,10 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS__PASSWORD}
     restart: unless-stopped
     healthcheck:
-      test: redis-cli ping
+      test: redis-cli -a ${REDIS__PASSWORD} ping
       interval: 10s
       timeout: 3s
       retries: 5
@@ -101,7 +102,7 @@ services:
     command: celery flower --port=5555
     environment:
       CELERY_BROKER_URL: amqp://${RABBITMQ__USER}:${RABBITMQ__PASSWORD}@${RABBITMQ__HOST}:${RABBITMQ__PORT}/${RABBITMQ__VHOST}
-      CELERY_RESULT_BACKEND: redis://${REDIS__HOST}:${REDIS__PORT}/${REDIS__DB_CELERY_BACKEND}
+      CELERY_RESULT_BACKEND: redis://${REDIS__PASSWORD}@${REDIS__HOST}:${REDIS__PORT}/${REDIS__DB_CELERY_BACKEND}
     ports:
       - 5555:5555
     depends_on:
