@@ -32,10 +32,11 @@ async def check_object_exists[
 ) -> ModelT:
     """Проверка существования объекта в БД."""
     obj = await crud.get(obj_id, session, *conditions)
-    if obj is None:
+    is_active = obj.is_active
+    if obj is None or not is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Объект модели {crud.model.__name__} не найден.',
+            detail='Объект не найден или неактивен.',
         )
     return obj
 
