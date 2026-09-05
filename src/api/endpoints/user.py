@@ -91,7 +91,7 @@ async def update_me_info(
     request: Request = None,
 ) -> User:
     """Обновляет данные текущего пользователя."""
-    ensure_can_change_role(obj_in, user)
+    ensure_can_change_role(obj_in, user, user_id=user.id)
     return await user_manager.update(obj_in, user, safe=True, request=request)
 
 
