@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from crud import action_crud, cafe_crud, dish_crud, slot_crud, table_crud
+from crud import cafe_crud, slot_crud, table_crud
 from crud.base import CRUDBase
 from models import Booking, BookingTableSlot, Slot, Table, User
 from schemas.booking import BookingCreate, BookingUpdate
@@ -74,29 +74,6 @@ async def existing_user(user_create: UserCreate, user_manager: UserManager) -> N
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Указанный username занят.',
         )
-
-
-async def check_dish_or_action_exists(
-    obj_id: int,
-    session: AsyncSession,
-    obj_type: str,
-) -> object:
-    """Проверка существования в БД объекта."""
-    if obj_type == 'Dish':
-        obj_crud = dish_crud
-    elif obj_type == 'Action':
-        obj_crud = action_crud
-
-    db_object = await obj_crud.get(
-        obj_id,
-        session,
-    )
-    if db_object is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Объект не найден в базе',
-        )
-    return db_object
 
 
 def check_slot_not_started(slot: Slot, booking_date: date) -> None:
@@ -309,13 +286,14 @@ def ensure_can_change_role(
     user_id: int | None = None,
 ) -> None:
     """Запрещает менять ротль всем, кроме суперюзера и админа."""
-    if obj_in.role and user_id == user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Нельзя сменить роль самому себе.',
-        )
     if obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER] and (not user.role.ADMIN or not user.is_superuser):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='У вас недостаточно прав для изменения роли.',
+        )
+
+    if obj_in.role and user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя сменить роль самому себе.',
         )
