@@ -250,50 +250,64 @@ async def validate_managers_id(
     return list(db_managers)
 
 
+def ensure_permissions(
+    user: User,
+    user_obj: User,
+) -> None:
+    """Запрещает менеджерам редактировать админов и других менеджеров."""
+    if (user_obj.role in [RoleEnum.ADMIN, RoleEnum.MANAGER] or user_obj.is_superuser) and (
+        not ((user.role == RoleEnum.ADMIN or user.is_superuser) or user.id == user_obj.id)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для изменения данной учетной записи',
+        )
+
+
 def ensure_can_deactivate(
     obj_in: UserUpdate | CafeUpdate,
     user: User,
+    user_obj: User,
     user_id: int = None,
 ) -> None:
     """Запрещает деактивацию всем, кроме суперюзера.
 
     Предназначена для использования в patch запросах к юзерам и кафе.
     """
-    if obj_in.is_active is False and (not user.role.ADMIN or not user.is_superuser):
+    ensure_permissions(user, user_obj)
+    if obj_in.is_active is False and user.role != RoleEnum.ADMIN and not user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail='У вас недостаточно прав для деактивации.',
+            detail='У вас недостаточно прав для деактивации учетной записи.',
         )
     if obj_in.is_active is False and user_id == user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Нельзя деактивировать самого себя.',
         )
-    if (
-        obj_in is UserUpdate
-        and obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER]
-        and (not user.role.ADMIN or not user.is_superuser)
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='У вас недостаточно прав для выдачи роли.',
-        )
 
 
 def ensure_can_change_role(
     obj_in: UserUpdate,
     user: User,
+    user_obj: User | None = None,
     user_id: int | None = None,
 ) -> None:
-    """Запрещает менять ротль всем, кроме суперюзера и админа."""
-    if obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER] and (not user.role.ADMIN or not user.is_superuser):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='У вас недостаточно прав для изменения роли.',
-        )
-
-    if obj_in.role and user_id == user.id:
+    """Запрещает менять роль всем, кроме суперюзера и админа."""
+    if obj_in.role and user_id == user.id and obj_in.role != user_obj.role:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Нельзя сменить роль самому себе.',
+        )
+
+    ensure_permissions(user, user_obj)
+    if (
+        obj_in.role
+        and obj_in.role in [RoleEnum.ADMIN, RoleEnum.MANAGER]
+        and user.role != RoleEnum.ADMIN
+        and not user.is_superuser
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='У вас недостаточно прав для изменения роли.',
         )

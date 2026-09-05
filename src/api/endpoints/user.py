@@ -91,7 +91,7 @@ async def update_me_info(
     request: Request = None,
 ) -> User:
     """Обновляет данные текущего пользователя."""
-    ensure_can_change_role(obj_in, user, user_id=user.id)
+    ensure_can_change_role(obj_in, user, user_obj=user, user_id=user.id)
     return await user_manager.update(obj_in, user, safe=True, request=request)
 
 
@@ -122,6 +122,6 @@ async def update_user_info(
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
     user_obj = await check_object_exists(user_crud, user_id, session)
-    ensure_can_deactivate(obj_in, user, user_id)
-    ensure_can_change_role(obj_in, user, user_id)
+    ensure_can_deactivate(obj_in, user, user_obj=user_obj, user_id=user_id)
+    ensure_can_change_role(obj_in, user, user_obj=user_obj, user_id=user_id)
     return await user_manager.update(obj_in, user_obj, request=request)
