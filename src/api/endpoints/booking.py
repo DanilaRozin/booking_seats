@@ -129,11 +129,24 @@ async def update_booking(
     для пользователей - только свои.
     """
     booking = await check_object_exists(booking_crud, booking_id, session)
+    if user.role == RoleEnum.USER and booking.status in ['ACTIVE', 'CANCELED', 'COMPLETED']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Редактирование бронирования недоступно.',
+        )
 
     if user.role == RoleEnum.USER and booking.user_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Доступ к бронированию запрещен',
+        )
+
+    if user.role == RoleEnum.USER and booking_in.status in ['ACTIVE', 'COMPLETED']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                'Недостаточно прав для смены статуса бронирования. Вы можете только отменить бронирование.'
+            ),
         )
     if user.role == RoleEnum.MANAGER and booking.cafe_id != user.cafe_id:
         raise HTTPException(
