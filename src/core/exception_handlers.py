@@ -20,8 +20,11 @@ async def validation_exception_handler(
         messages = []
         for err in errors:
             field = '.'.join(str(part) for part in err['loc'] if part not in ('body', 'query', 'path'))
-            message = ERROR_MESSAGES.get(err['type'], err['msg'])
-            messages.append(f'{field}: {message}')
+            if err['type'] == 'value_error' and 'ctx' in err and 'error' in err['ctx']:
+                message = str(err['ctx']['error'])
+            else:
+                message = ERROR_MESSAGES.get(err['type'], err['msg'])
+            messages.append(f'{field}: {message}' if field else message)
         detail = '; '.join(messages)
 
     return JSONResponse(
