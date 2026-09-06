@@ -1,6 +1,7 @@
 from collections.abc import Sequence
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep, UserDep
@@ -23,9 +24,19 @@ router = APIRouter()
 )
 async def get_list_user_info(
     session: SessionDep,
+    show_active: Annotated[
+        bool | None,
+        Query(description='Фильтр для просмотра активных или неактивных пользвоателей'),
+    ] = None,
 ) -> Sequence[User]:
     """Возращает список состоящий из всех пользователей."""
-    return await user_crud.get_multi(session)
+    conditions = []
+    if show_active is None:
+        pass
+    else:
+        conditions.append(User.is_active.is_(show_active))
+
+    return await user_crud.get_multi(session, *conditions)
 
 
 # Регистрация пользователя
