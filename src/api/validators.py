@@ -28,14 +28,20 @@ async def check_object_exists[
     crud: CRUDBase[ModelT, CreateSchemaT, UpdateSchemaT],
     obj_id: int,
     session: AsyncSession,
+    check_active: bool = True,
     *conditions: ColumnElement[bool],
 ) -> ModelT:
     """Проверка существования объекта в БД."""
     obj = await crud.get(obj_id, session, *conditions)
-    if obj is None or not obj.is_active:
+    if obj is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Объект не найден или неактивен.',
+            detail='Объект не найден.',
+        )
+    if check_active and not obj.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Объект неактивен.',
         )
     return obj
 
