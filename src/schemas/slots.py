@@ -15,6 +15,8 @@ class BaseSchemasData(BaseModel):
     end_time: time
     description: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class CreateTimeSlot(BaseSchemasData):
     """Pydantic - Схема создания временного слота."""

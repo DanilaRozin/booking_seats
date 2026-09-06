@@ -17,7 +17,7 @@ class TableBase(BaseModel):
     ] = None
     seat_number: Annotated[PositiveInt | None, Field(ge=1, examples=[1])] = None
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(from_attributes=True, extra='forbid')
 
 
 class TableCreate(TableBase):
