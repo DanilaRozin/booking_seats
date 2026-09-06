@@ -72,3 +72,11 @@ class FullTimeSlot(BaseSchema, BaseSchemasData):
     cafe: CafeShortInfo | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ShortSlotInfo(BaseSchemasData):
+    """Pydantic - схема короткого представления для ответа.."""
+
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)

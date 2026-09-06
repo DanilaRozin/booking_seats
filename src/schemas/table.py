@@ -39,3 +39,11 @@ class TableInfo(TableBase, BaseSchema):
     cafe: CafeShortInfo
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ShortTableInfo(TableBase):
+    """Pydantic - схема короткого представления для ответа.."""
+
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
