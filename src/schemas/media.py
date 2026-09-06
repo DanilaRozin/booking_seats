@@ -15,10 +15,6 @@ class MediaResponse(BaseModel):
         str,
         Field(description='Оригинальное или сгенерированное имя файла'),
     ]
-    content_type: Annotated[
-        str,
-        Field(description='MIME-тип изображения'),
-    ]
 
     class Config:
         """Конфигурация Pydantic схемы."""
