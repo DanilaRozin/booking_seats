@@ -1,5 +1,5 @@
 from datetime import date, datetime, time
-from typing import Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -369,11 +369,44 @@ async def validate_time_intersection(
             f'{c.id} ({c.start_time.strftime("%H:%M")}-{c.end_time.strftime("%H:%M")})' for c in conflicts
         ]
         error_message = (
-            f'Данное время пересекается со следующими слотами: '
+            'Данное время пересекается со следующими слотами: '
             f'{", ".join(conflict_details)}. '
-            f'Пожалуйста, выберите другое время.'
+            'Пожалуйста, выберите другое время.'
         )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=error_message,
+        )
+
+
+async def validate_slot_update_rules(
+    session: AsyncSession,
+    slot: Slot,
+    obj_in: Dict[str, Any],
+    cafe_id: int,
+) -> None:
+    """Проверяет бизнес-правила при обновлении слота."""
+    new_is_active = obj_in.is_active
+
+    if not slot.is_active and new_is_active is True:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                'Невозможно восстановить активность слота. '
+                'Деактивированные слоты нельзя активировать повторно.'
+            ),
+        )
+
+    will_be_active = new_is_active if new_is_active is not None else slot.is_active
+
+    if will_be_active:
+        new_start = obj_in.start_time if obj_in.start_time is not None else slot.start_time
+        new_end = obj_in.end_time if obj_in.end_time is not None else slot.end_time
+
+        await validate_time_intersection(
+            session=session,
+            cafe_id=cafe_id,
+            start_time=new_start,
+            end_time=new_end,
+            exclude_id=slot.id,
         )
