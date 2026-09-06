@@ -116,7 +116,7 @@ async def get_user_info_by_id(
     user_id: int,
 ) -> User:
     """Возвращает данные пользователя по id (для менеджеров и админов)."""
-    return await check_object_exists(user_crud, user_id, session)
+    return await check_object_exists(user_crud, user_id, session, check_active=False)
 
 
 @router.patch(
@@ -132,7 +132,7 @@ async def update_user_info(
     user_manager: UserManager = Depends(get_user_manager),
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
-    user_obj = await check_object_exists(user_crud, user_id, session)
+    user_obj = await check_object_exists(user_crud, user_id, session, check_active=False)
     ensure_can_deactivate(obj_in, user, user_obj=user_obj, user_id=user_id)
     ensure_can_change_role(obj_in, user, user_obj=user_obj, user_id=user_id)
     return await user_manager.update(obj_in, user_obj, request=request)
