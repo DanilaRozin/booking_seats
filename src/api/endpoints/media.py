@@ -32,4 +32,4 @@ async def upload_media(file: UploadFile = File(...)) -> MediaResponse:
 async def get_media(media_id: UUID) -> FileResponse:
     """Возвращает файл изображения по его UUID."""
     file_path = MediaService.get_image_path(media_id)
-    return FileResponse(path=file_path, media_type='image/jpeg')
+    return FileResponse(path=file_path)

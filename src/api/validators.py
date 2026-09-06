@@ -29,8 +29,8 @@ async def check_object_exists[
     crud: CRUDBase[ModelT, CreateSchemaT, UpdateSchemaT],
     obj_id: int,
     session: AsyncSession,
-    check_active: bool = True,
     *conditions: ColumnElement[bool],
+    check_active: bool = True,
 ) -> ModelT:
     """Проверка существования объекта в БД."""
     obj = await crud.get(obj_id, session, *conditions)
@@ -162,18 +162,24 @@ async def validate_booking_create(booking_create: BookingCreate, session: AsyncS
             detail='В бронировании указаны повторяющиеся пары стол-слот',
         )
     for table_slot in booking_create.tables_slots:
-        await check_object_exists(
+        table = await check_object_exists(
             table_crud,
             table_slot.table_id,
             session,
             Table.cafe_id == booking_create.cafe_id,
+            check_active=True,
         )
-
+        if table.seat_number < booking_create.guest_number:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Количество гостей привышает количество мест за столом.',
+            )
         slot = await check_object_exists(
             slot_crud,
             table_slot.slot_id,
             session,
             Slot.cafe_id == booking_create.cafe_id,
+            check_active=True,
         )
 
         check_booking_datetime(
@@ -213,18 +219,25 @@ async def validate_booking_update(
                 detail='В бронировании указаны повторяющиеся пары стол-слот',
             )
     for table_slot in table_slots:
-        await check_object_exists(
+        table = await check_object_exists(
             table_crud,
             table_slot.table_id,
             session,
             Table.cafe_id == booking.cafe_id,
+            check_active=True,
         )
+        if table.seat_number < booking_update.guest_number:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Количество гостей привышает количество мест за столом.',
+            )
 
         slot = await check_object_exists(
             slot_crud,
             table_slot.slot_id,
             session,
             Slot.cafe_id == booking.cafe_id,
+            check_active=True,
         )
 
         check_slot_not_started(slot, booking_date)
@@ -273,11 +286,15 @@ async def validate_managers_id(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f'Нельзя назначить несуществующих менеджеров {list(bad_managers)}',
         )
-    is_not_free = [user.id for user in db_managers if (user.cafe_id != cafe_id and user.cafe_id is not None)]
+    is_not_free = [
+        user.id
+        for user in db_managers
+        if ((user.cafe_id != cafe_id and user.cafe_id is not None) or not user.is_active)
+    ]
     if is_not_free:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=f'Нельзя назначить несвободных менеджеров: {is_not_free}',
+            detail=f'Нельзя назначить несвободных или неактивных менеджеров: {is_not_free}',
         )
 
     return list(db_managers)

@@ -1,6 +1,7 @@
 from collections.abc import Sequence
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi_users import exceptions
 
 from api import SessionDep, UserDep
@@ -23,9 +24,19 @@ router = APIRouter()
 )
 async def get_list_user_info(
     session: SessionDep,
+    show_active: Annotated[
+        bool | None,
+        Query(description='Фильтр для просмотра активных или неактивных пользвоателей'),
+    ] = None,
 ) -> Sequence[User]:
     """Возращает список состоящий из всех пользователей."""
-    return await user_crud.get_multi(session)
+    conditions = []
+    if show_active is None:
+        pass
+    else:
+        conditions.append(User.is_active.is_(show_active))
+
+    return await user_crud.get_multi(session, *conditions)
 
 
 # Регистрация пользователя
@@ -105,7 +116,7 @@ async def get_user_info_by_id(
     user_id: int,
 ) -> User:
     """Возвращает данные пользователя по id (для менеджеров и админов)."""
-    return await check_object_exists(user_crud, user_id, session)
+    return await check_object_exists(user_crud, user_id, session, check_active=False)
 
 
 @router.patch(
@@ -121,7 +132,7 @@ async def update_user_info(
     user_manager: UserManager = Depends(get_user_manager),
 ) -> User:
     """Обновляет данные пользователя по id (для менеджеров и админов)."""
-    user_obj = await check_object_exists(user_crud, user_id, session)
+    user_obj = await check_object_exists(user_crud, user_id, session, check_active=False)
     ensure_can_deactivate(obj_in, user, user_obj=user_obj, user_id=user_id)
     ensure_can_change_role(obj_in, user, user_obj=user_obj, user_id=user_id)
     return await user_manager.update(obj_in, user_obj, request=request)
