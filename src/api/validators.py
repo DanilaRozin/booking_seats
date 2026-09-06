@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
+from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -296,4 +297,34 @@ def ensure_can_change_role(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Нельзя сменить роль самому себе.',
+        )
+
+
+async def validate_time_intersection(
+    session: AsyncSession,
+    cafe_id: int,
+    start_time: time,
+    end_time: time,
+    exclude_id: Optional[int] = None,
+) -> None:
+    """Проверяет уникальность временного слота (отсутствие пересечений)."""
+    conflicts = await slot_crud.check_time_slot(
+        session=session,
+        cafe_id=cafe_id,
+        start_time=start_time,
+        end_time=end_time,
+        exclude_id=exclude_id,
+    )
+    if conflicts:
+        conflict_details = [
+            f'{c.id} ({c.start_time.strftime("%H:%M")}-{c.end_time.strftime("%H:%M")})' for c in conflicts
+        ]
+        error_message = (
+            f'Данное время пересекается со следующими слотами: '
+            f'{", ".join(conflict_details)}. '
+            f'Пожалуйста, выберите другое время.'
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=error_message,
         )

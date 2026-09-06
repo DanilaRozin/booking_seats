@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Path, Query, status
 from sqlalchemy.orm import selectinload
 
 from api import SessionDep
-from api.validators import check_object_exists
+from api.validators import check_object_exists, validate_time_intersection
 from crud import cafe_crud, slot_crud
 from models.slots import Slot
 from models.user import User
@@ -92,6 +92,13 @@ async def create_slot(
     *Только для администраторов и менеджеров.*
     """
     cafe_obj = await check_object_exists(cafe_crud, cafe_id, session)
+    await validate_time_intersection(
+        session=session,
+        cafe_id=cafe_obj.id,
+        start_time=slot_in.start_time,
+        end_time=slot_in.end_time,
+    )
+
     new_slot = await slot_crud.create(
         obj_in=slot_in,
         session=session,
@@ -125,6 +132,17 @@ async def update_slot(
         session,
         Slot.cafe_id == cafe_id,
     )
+    new_start = obj_in.start_time if obj_in.start_time is not None else slot.start_time
+    new_end = obj_in.end_time if obj_in.end_time is not None else slot.end_time
+
+    await validate_time_intersection(
+        session=session,
+        cafe_id=slot.cafe_id,
+        start_time=new_start,
+        end_time=new_end,
+        exclude_id=slot.id,
+    )
+
     return await slot_crud.update(
         slot,
         obj_in,
