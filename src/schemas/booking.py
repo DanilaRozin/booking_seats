@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt, field_validator
 
 from schemas.base_schema import BaseSchema
 from schemas.cafe import CafeShortInfo
@@ -8,6 +8,7 @@ from schemas.slots import BaseSchemasData
 from schemas.table import TableBase
 from schemas.user import UserShortInfo
 
+from .validators import validate_booking_date
 from core.constants import BookingStatus
 
 
@@ -38,6 +39,7 @@ class BookingCreate(BaseModel):
     note: str | None = None
     booking_date: date
 
+    _validate_booking_date = field_validator('booking_date')(validate_booking_date)
     model_config = ConfigDict(extra='forbid')
 
 

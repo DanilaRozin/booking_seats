@@ -1,3 +1,4 @@
+from api.endpoints.actions import router as action_router
 from api.endpoints.auth import router as auth_router
 from api.endpoints.booking import router as booking_router
 from api.endpoints.cafe import router as cafe_router
@@ -14,4 +15,5 @@ __all__ = [
     'table_router',
     'slot_router',
     'dish_router',
+    'action_router',
 ]

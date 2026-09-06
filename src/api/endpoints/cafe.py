@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.validators import (
     check_name_duplicate,
     check_object_exists,
+    ensure_can_deactivate,
     existing_image,
     validate_managers_id,
 )
@@ -78,12 +79,11 @@ async def create_new_cafe(
     await check_name_duplicate(cafe_in.name, session)
     cafe_base_data = CafeBase(**cafe_in.model_dump())
 
-    new_cafe = await cafe_crud.create(obj_in=cafe_base_data, session=session)
-
     attached_managers = await validate_managers_id(
         cafe_in.managers_id,
         session,
     )
+    new_cafe = await cafe_crud.create(obj_in=cafe_base_data, session=session)
 
     if cafe_in.photo_id:
         existing_image(cafe_in.photo_id)
@@ -153,21 +153,21 @@ async def partial_update_cafe(
             Cafe.id == user.cafe_id,
         )
     db_cafe = await check_object_exists(cafe_crud, cafe_id, session)
-
+    ensure_can_deactivate(obj_in, user)
     if obj_in.name is not None:
         await check_name_duplicate(obj_in.name, session)
 
     if obj_in.photo_id:
         existing_image(obj_in.photo_id)
 
-    db_cafe = await cafe_crud.update(db_cafe, obj_in, session)
-
     if obj_in.managers_id:
         attached_managers = await validate_managers_id(
             obj_in.managers_id,
             session,
+            cafe_id,
         )
         db_cafe.managers = attached_managers
+    db_cafe = await cafe_crud.update(db_cafe, obj_in, session)
 
     await session.commit()
     await session.refresh(db_cafe)
