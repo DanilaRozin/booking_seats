@@ -41,6 +41,7 @@ class SlotCRUD(CRUDBase[Slot, CreateTimeSlot, UpdateTimeSlot]):
         """
         db = select(Slot).where(
             Slot.cafe_id == cafe_id,
+            Slot.is_active,
             Slot.start_time < end_time,
             Slot.end_time > start_time,
         )

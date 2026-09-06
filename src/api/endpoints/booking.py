@@ -108,8 +108,7 @@ async def get_booking_by_id(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Доступ к бронированию другого кафе запрещен',
         )
-
-    return booking
+    return await booking_crud.get_full_booking(session, booking_id)
 
 
 @router.patch(

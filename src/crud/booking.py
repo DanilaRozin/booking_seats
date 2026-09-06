@@ -4,9 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from crud.base import CRUDBase
 from models import Booking, BookingTableSlot
-from schemas.booking import BookingCreate, BookingInfo, BookingTableSlotShortInfo, BookingUpdate
-from schemas.cafe import CafeShortInfo
-from schemas.user import UserShortInfo
+from schemas.booking import BookingCreate, BookingUpdate
 
 
 class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
@@ -87,7 +85,7 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
 
     async def get_full_booking(self, session: AsyncSession, booking_id: int) -> Booking | None:
         """Получает полное бронирование со всеми связями."""
-        stmt = (
+        booking = (
             select(Booking)
             .where(Booking.id == booking_id)
             .options(
@@ -97,24 +95,8 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
                 selectinload(Booking.tables_slots).joinedload(BookingTableSlot.slot),
             )
         )
-
-        result = await session.execute(stmt)
-        booking_obj = result.scalar_one_or_none()
-        return BookingInfo(
-            id=booking_obj.id,
-            user=UserShortInfo.model_validate(booking_obj.user),
-            cafe=CafeShortInfo.model_validate(booking_obj.cafe),
-            tables_slots=[
-                BookingTableSlotShortInfo.model_validate(slot) for slot in booking_obj.tables_slots
-            ],
-            guest_number=booking_obj.guest_number,
-            note=booking_obj.note,
-            status=booking_obj.status,
-            booking_date=booking_obj.booking_date,
-            is_active=booking_obj.is_active,
-            created_at=booking_obj.created_at,
-            updated_at=booking_obj.updated_at,
-        )
+        result = await session.execute(booking)
+        return result.scalar_one_or_none()
 
 
 booking_crud = CRUDBooking(Booking)
