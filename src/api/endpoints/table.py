@@ -123,7 +123,7 @@ async def update_table(
     Только для администраторов и менеджеров.
 
     """
-    await check_object_exists(cafe_crud, cafe_id, session)
+    await check_object_exists(cafe_crud, cafe_id, session, check_active=False)
     table = await check_object_exists(
         table_crud,
         table_id,
