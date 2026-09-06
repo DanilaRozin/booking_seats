@@ -4,8 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
 from schemas.base_schema import BaseSchema
 from schemas.cafe import CafeShortInfo
-from schemas.slots import FullTimeSlot
-from schemas.table import TableInfo
+from schemas.slots import BaseSchemasData
+from schemas.table import TableBase
 from schemas.user import UserShortInfo
 
 from core.constants import BookingStatus
@@ -23,8 +23,8 @@ class BookingTableSlot(BaseModel):
 class BookingTableSlotShortInfo(BaseModel):
     """Краткая информация о столе и временном слоте."""
 
-    table: TableInfo
-    slot: FullTimeSlot
+    table: TableBase
+    slot: BaseSchemasData
 
     model_config = ConfigDict(from_attributes=True)
 

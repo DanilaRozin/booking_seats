@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -15,7 +15,7 @@ from schemas.user import UserCreate
 from services.media import MediaService
 
 from core.base_model import Base
-from core.constants import BookingStatus, RoleEnum
+from core.constants import MOSCOW_TZ, BookingStatus, RoleEnum
 from core.user import UserManager
 
 
@@ -117,6 +117,26 @@ async def check_table_slot_booked(
         )
 
 
+async def check_booking_datetime(
+    booking_date: date,
+    slot: Slot,
+) -> None:
+    """Проверяет, что дата и временной слот бронирования ещё не начались."""
+    now = datetime.now(MOSCOW_TZ)
+
+    if booking_date < now.date():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя создать бронирование на прошедшую дату',
+        )
+
+    if booking_date == now.date() and slot.start_time <= now.time():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Нельзя забронировать уже начавшийся временной слот',
+        )
+
+
 async def validate_booking_create(booking_create: BookingCreate, session: AsyncSession) -> None:
     """Проверяет данные для создания бронирования."""
     await check_object_exists(cafe_crud, booking_create.cafe_id, session)
@@ -137,11 +157,16 @@ async def validate_booking_create(booking_create: BookingCreate, session: AsyncS
             Table.cafe_id == booking_create.cafe_id,
         )
 
-        await check_object_exists(
+        slot = await check_object_exists(
             slot_crud,
             table_slot.slot_id,
             session,
             Slot.cafe_id == booking_create.cafe_id,
+        )
+
+        check_booking_datetime(
+            booking_date=booking_create.booking_date,
+            slot=slot,
         )
 
         await check_table_slot_booked(
@@ -187,11 +212,16 @@ async def validate_booking_update(
             Table.cafe_id == booking.cafe_id,
         )
 
-        await check_object_exists(
+        slot = await check_object_exists(
             slot_crud,
             table_slot.slot_id,
             session,
             Slot.cafe_id == booking.cafe_id,
+        )
+
+        check_booking_datetime(
+            booking_date=booking_date,
+            slot=slot,
         )
 
         await check_table_slot_booked(

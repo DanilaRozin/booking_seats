@@ -1,5 +1,6 @@
 from enum import StrEnum
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 TABLE_DESC_LENGTH = 256
 """Максимальное количество символов для поля "Описание" модели "Столов"."""
@@ -17,6 +18,8 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FILE_SIZE = 5 * 1024 * 1024
 ALLOWED_CONTENT_TYPES = {'image/jpeg', 'image/jpg', 'image/png'}
+
+MOSCOW_TZ = ZoneInfo('Europe/Moscow')
 
 
 class RoleEnum(StrEnum):
