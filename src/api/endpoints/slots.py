@@ -130,7 +130,6 @@ async def update_slot(
         slot_crud,
         slot_id,
         session,
-        False,
         Slot.cafe_id == cafe_id,
     )
 
